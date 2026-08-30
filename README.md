@@ -11,7 +11,7 @@ Exam-oriented preparation for MFML, ISM, DNN, and ML. The repository is organize
 | DNN | [25 solved questions](DNN/ENDSEM_QUESTION_BANK.md) | [DNN scoring guide](DNN/ENDSEM_SCORING_GUIDE.md) |
 | ML | [25 solved questions](ML/ENDSEM_QUESTION_BANK.md) | [ML scoring guide](ML/ENDSEM_SCORING_GUIDE.md) |
 
-Each subject folder also contains its available course handout, watermarked slides, latest and previous question papers, notes, and supporting material.
+Each subject folder contains only its end-sem question bank and scoring guide, matching the reference repository's clean layout. University PDFs, slides, question papers, and working files remain local and are intentionally excluded from GitHub.
 
 ## Recommended order
 
@@ -30,4 +30,4 @@ Each subject folder also contains its available course handout, watermarked slid
 
 ## Access notice
 
-This private repository contains university-provided and watermarked course material. Keep it private and do not add collaborators or redistribute its contents unless university policy permits it.
+The GitHub repository contains only the generated Markdown study material. University-provided and watermarked source files remain local and are not published.
