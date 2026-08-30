@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lecture 7 — Backprop, Interactive Companion</title>
+<style>
+  :root{
+    --fwd:#00549f; --fwd-bg:#e8f0fa;
+    --bwd:#c02030; --bwd-bg:#fbe9eb;
+    --prm:#7030a0; --prm-bg:#f1e8f8;
+    --ink:#1c2733; --muted:#5b6b7b;
+    --teal:#006962; --cream:#fff8e8;
+    --card:#ffffff; --bg:#f4f7fb; --line:#dbe4ee;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:1.9rem;margin:.2em 0 .1em;color:#003e74}
+  h2{font-size:1.35rem;color:#003e74;margin:0 0 .4em}
+  h3{font-size:1.05rem;color:var(--teal);margin:1.1em 0 .35em}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:22px 24px;margin:22px 0;box-shadow:0 1px 4px rgba(20,40,80,.06)}
+  .onesentence{background:#fff;border:2px solid #003e74;border-radius:14px;padding:16px 22px;
+        font-size:1.08rem;text-align:center}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+  .chip{flex:1 1 220px;border-radius:10px;padding:10px 14px;font-size:.92rem;border:1px solid}
+  .chip.f{background:var(--fwd-bg);border-color:var(--fwd)}
+  .chip.b{background:var(--bwd-bg);border-color:var(--bwd)}
+  .chip.p{background:var(--prm-bg);border-color:var(--prm)}
+  .fwd{color:var(--fwd);font-weight:600}
+  .bwd{color:var(--bwd);font-weight:600}
+  .prm{color:var(--prm);font-weight:600}
+  .plain{background:var(--cream);border:1px solid #d8a93f;border-radius:10px;
+         padding:12px 16px;margin:12px 0;font-size:.95rem}
+  .plain b.t{color:#8a6d1d;text-transform:uppercase;font-size:.72rem;letter-spacing:.06em;display:block;margin-bottom:4px}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+  button{background:#003e74;color:#fff;border:0;border-radius:8px;padding:8px 16px;
+         font-size:.95rem;cursor:pointer;transition:background .15s}
+  button:hover{background:#00549f}
+  button.ghost{background:#e6edf5;color:#003e74}
+  button.ghost:hover{background:#d5e2f0}
+  button:disabled{opacity:.4;cursor:default}
+  input[type=range]{width:190px;accent-color:#00549f}
+  .explain{min-height:84px;background:#f0f5fb;border-left:4px solid #00549f;border-radius:8px;
+           padding:12px 16px;margin-top:12px;font-size:.97rem}
+  .explain .formula{font-family:Georgia,'Times New Roman',serif;font-size:1.06rem;margin-top:4px}
+  svg text{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  table.cheat{border-collapse:collapse;width:100%;font-size:.92rem}
+  table.cheat th,table.cheat td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  table.cheat th{color:#003e74;border-bottom:2px solid #003e74}
+  .mtx{display:inline-grid;grid-auto-flow:column;gap:0;vertical-align:middle;margin:0 4px}
+  .mtxcol{display:grid}
+  .cell{padding:5px 12px;text-align:center;min-width:86px;border-radius:6px;transition:all .15s}
+  .brk{border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:8px;padding:2px 1px}
+  .hl-f{background:var(--fwd-bg);outline:2px solid var(--fwd)}
+  .hl-b{background:var(--bwd-bg);outline:2px solid var(--bwd)}
+  .hl-r{background:#fff3cd;outline:2px solid #d8a93f}
+  .stage{padding:9px 13px;border-radius:9px;border:2px solid var(--line);background:#fff;font-size:.92rem;white-space:nowrap}
+  .stage.active{border-color:#003e74;background:#e8f0fa;box-shadow:0 0 0 3px #c8dcf2}
+  .arrow{color:var(--muted);font-size:1.2rem}
+  .pipe{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 14px}
+  .matzone{display:flex;gap:28px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.95rem}
+  .note{font-size:.85rem;color:var(--muted)}
+  .bigval{font-size:1.05rem}
+  .vbar{display:inline-block;width:46px;background:var(--bwd);border-radius:4px 4px 0 0;vertical-align:bottom;margin:0 7px}
+  .bars{display:flex;align-items:flex-end;height:auto;padding:0 6px;margin-top:10px}
+  .barlbl{text-align:center;font-size:.78rem;color:var(--muted)}
+  footer{color:var(--muted);font-size:.85rem;margin-top:30px;text-align:center}
+  @media (max-width:700px){ .matzone{gap:14px} .cell{min-width:70px;padding:4px 8px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Backpropagation &amp; Automatic Differentiation</h1>
+<p class="sub">Lecture 7 interactive companion · ZC416 — play with every idea from the slides. Best used alongside the PDF study guide.</p>
+
+<div class="onesentence">
+Backpropagation is just <b>the chain rule</b>, applied to a function built by <b>composing many small functions</b>, organized so that <b>no piece of arithmetic is ever repeated</b>.
+</div>
+
+<div class="legend">
+  <div class="chip f"><b style="color:var(--fwd)">forward signal</b><br>values flowing left → right (x, Z, a, loss)</div>
+  <div class="chip b"><b style="color:var(--bwd)">backward blame</b><br>gradients flowing right → left (δ, every ∂Loss/∂·)</div>
+  <div class="chip p"><b style="color:var(--prm)">parameters</b><br>the knobs training adjusts (A, b)</div>
+</div>
+
+<!-- ============================== SECTION 1: GRAPH ============================== -->
+<div class="card" id="graphcard">
+  <h2>1 · The computation graph, step by step <span class="note">(slides 11–14)</span></h2>
+  <div class="plain"><b class="t">In everyday words</b>
+  Give a name to every small step of the scary function, compute the steps one at a time writing each value down, then walk <i>backwards</i> through them, reusing the numbers you already wrote. The nightmare formula never appears.</div>
+  <p style="font-size:.95rem">The function: <span class="mono">f(x) = √(x² + e<sup>x²</sup>) + cos(x² + e<sup>x²</sup>)</span>, broken into
+  <span class="mono">a=x², b=eᵃ, c=a+b, d=√c, e=cos c, f=d+e</span>.
+  Drag <b>x</b>, then click <b>Step</b> to watch the <span class="fwd">forward pass</span> fill values left-to-right, and the <span class="bwd">backward pass</span> carry blame right-to-left. <b>Blame at a node = sum over outgoing arrows of (local rate) × (blame at the arrow’s head).</b></p>
+
+  <div class="controls">
+    <label>x = <b id="xval" class="fwd">1.00</b></label>
+    <input type="range" id="xslider" min="0.5" max="1.5" step="0.01" value="1">
+    <button id="gback" class="ghost">◀ Back</button>
+    <button id="gstep">Step ▶</button>
+    <button id="gall" class="ghost">Run all ⏭</button>
+    <button id="greset" class="ghost">Reset</button>
+  </div>
+
+  <svg id="gsvg" viewBox="0 0 1010 330" width="100%" aria-label="computation graph">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#6b7c8d"/>
+      </marker>
+    </defs>
+    <g id="edges" stroke="#6b7c8d" stroke-width="1.8" fill="none"></g>
+    <g id="nodes"></g>
+    <g id="labels"></g>
+  </svg>
+
+  <div class="explain" id="gexplain"></div>
+</div>
+
+<!-- ============================== SECTION 2: VALVE ============================== -->
+<div class="card" id="valvecard">
+  <h2>2 · The sigmoid valve <span class="note">(slides 17–20)</span></h2>
+  <div class="plain"><b class="t">In everyday words</b>
+  Each sigmoid neuron is a <b>valve</b> on the blame pipe. An <i>undecided</i> neuron (output near 0.5) is wide open — blame flows through. A <i>confident, saturated</i> neuron (output near 0 or 1) is almost shut — blame is blocked. The valve’s opening is the slope <span class="mono">a(1−a)</span>, free to compute once you have <span class="mono">a</span>.</div>
+
+  <div class="controls">
+    <label>Z = <b id="zval" class="fwd">0.0</b></label>
+    <input type="range" id="zslider" min="-8" max="8" step="0.1" value="0">
+    <span style="margin-left:14px">a = σ(Z) = <b id="aval" class="fwd">0.500000</b></span>
+    <span style="margin-left:14px">valve opening a(1−a) = <b id="sval" class="bwd">0.250000</b></span>
+  </div>
+
+  <svg id="vsvg" viewBox="0 0 1010 360" width="100%" aria-label="sigmoid and slope">
+    <!-- built by JS -->
+  </svg>
+
+  <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <div>
+      <h3 style="margin-top:0">Blame through this one valve</h3>
+      <div style="font-size:1.02rem">blame in <span class="bwd">1.000</span> → × <span id="s2" class="bwd">0.250</span> → blame out <b id="bout" class="bwd">0.250</b></div>
+      <div class="note">δ<sup>(Z)</sup> = δ<sup>(a)</sup> · a(1−a) — rule (5), one wire</div>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Why deep sigmoid nets fade: blame after k layers (best case)</h3>
+      <div class="bars" id="bars"></div>
+      <div class="note">even wide-open valves multiply blame by ≤ 0.25 — the seed of the “vanishing gradient” problem</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SECTION 3: LAYER ============================== -->
+<div class="card" id="layercard">
+  <h2>3 · One full layer, forward and backward <span class="note">(slides 16–25 — the exact numbers from the study guide)</span></h2>
+  <div class="plain"><b class="t">In everyday words</b>
+  A layer <b>mixes</b> its input, then <b>squashes</b> it. Backward, you undo in reverse: <b>un-squash</b> (scale by valve openings), then <b>un-mix</b> (send blame back along the wires). On the way past, read the blame on the layer’s own knobs. Hover over the ∂Loss/∂A grid at step 6 to see <span class="bwd">blame</span> × <span class="fwd">signal</span> literally.</div>
+
+  <div class="pipe" id="pipe">
+    <span class="stage" data-st="0"><span class="fwd">x</span></span><span class="arrow">→</span>
+    <span class="stage" data-st="1"><span class="prm">A</span><span class="fwd">x</span>+<span class="prm">b</span></span><span class="arrow">→</span>
+    <span class="stage" data-st="1b"><span class="fwd">Z</span></span><span class="arrow">→</span>
+    <span class="stage" data-st="2">σ</span><span class="arrow">→</span>
+    <span class="stage" data-st="2b"><span class="fwd">a</span></span><span class="arrow">→</span>
+    <span class="stage" data-st="3">Loss</span>
+  </div>
+
+  <div class="controls">
+    <button id="lback" class="ghost">◀ Back</button>
+    <button id="lstep">Step ▶</button>
+    <button id="lreset" class="ghost">Reset</button>
+    <span class="note" id="lcount"></span>
+  </div>
+
+  <div class="explain" id="lexplain"></div>
+  <div class="matzone" id="lmats"></div>
+</div>
+
+<!-- ============================== SECTION 4: CHEAT SHEET ============================== -->
+<div class="card">
+  <h2>4 · The cheat sheet</h2>
+  <table class="cheat">
+    <tr><th>Concept</th><th>Formula</th><th>Plain meaning</th></tr>
+    <tr><td>Chain rule (path)</td><td class="mono">dy/dx = dy/du · du/dx</td><td>sensitivities multiply along a path</td></tr>
+    <tr><td>Chain rule (fan-out)</td><td class="mono">∂f/∂c = Σ<sub>children</sub> ∂f/∂x<sub>j</sub> · ∂x<sub>j</sub>/∂c</td><td>add contributions across all paths</td></tr>
+    <tr><td>Graph backprop</td><td class="mono">seed ∂f/∂f = 1, sweep right→left</td><td>blame at node = sum over outgoing arrows</td></tr>
+    <tr><td>One layer (forward)</td><td class="mono"><span class="fwd">Z</span> = <span class="prm">A</span><span class="fwd">x</span>+<span class="prm">b</span>, <span class="fwd">a</span> = σ(<span class="fwd">Z</span>)</td><td>mix → shift → squash</td></tr>
+    <tr><td>Sigmoid slope</td><td class="mono">σ′ = a(1−a)</td><td>free once a is cached; max 0.25 at a = ½</td></tr>
+    <tr><td>Sigmoid Jacobian</td><td class="mono">∂a/∂Z = diag(a⊙(1−a))</td><td>diagonal = no cross-talk = row of valves</td></tr>
+    <tr><td>(5) through activation</td><td class="mono"><span class="bwd">δ⁽ᶻ⁾</span> = <span class="bwd">δ⁽ᵃ⁾</span> ⊙ a ⊙ (1−a)</td><td>scale blame by each valve’s opening</td></tr>
+    <tr><td>(6) weight gradient</td><td class="mono">∂Loss/∂<span class="prm">A</span> = <span class="bwd">δ⁽ᶻ⁾</span><span class="fwd">xᵀ</span></td><td>blame × signal (outer product / multiplication table)</td></tr>
+    <tr><td>(7) bias gradient</td><td class="mono">∂Loss/∂<span class="prm">b</span> = <span class="bwd">δ⁽ᶻ⁾</span></td><td>blame copied straight down</td></tr>
+    <tr><td>(8) input gradient</td><td class="mono">∂Loss/∂<span class="fwd">x</span> = <span class="prm">Aᵀ</span><span class="bwd">δ⁽ᶻ⁾</span></td><td>same wires, traffic reversed</td></tr>
+    <tr><td>Master pattern</td><td class="mono">∇h = J<sub>f</sub>ᵀ ∇<sub>z</sub>g |<sub>z=f(x)</sub></td><td>blame in, Jᵀ per stage, walking right to left</td></tr>
+    <tr><td>Why it is cheap</td><td class="mono">reuse δ; one backward sweep</td><td>gradient ≈ cost of one forward pass</td></tr>
+  </table>
+  <p class="note" style="margin-top:10px"><b>Shape bookkeeping</b> (predicts every formula): the gradient of a scalar by X has X’s shape · sums kill the index they run over · J<sub>f</sub> is (outputs)×(inputs) · if shapes don’t multiply, a transpose is missing.</p>
+</div>
+
+<footer>All numbers verified in code: graph backprop = closed form = finite differences (f′(1) = 5.983083); layer gradients match finite-difference checks to 6+ decimals.</footer>
+</div>
+
+<script>
+"use strict";
+/* ---------- shared math ---------- */
+const sig = z => 1/(1+Math.exp(-z));
+const fmt = (v,n=6) => (Math.abs(v) < 1e-12 ? 0 : v).toFixed(n);
+
+/* ============================================================
+   SECTION 1 — computation graph
+   ============================================================ */
+const G = (() => {
+  const NV = { x:[55,165], a:[235,165], b:[415,75], c:[595,165], d:[775,75], e:[775,255], f:[955,165] };
+  const NO = { sq:[145,165,'(·)²'], exp:[325,75,'exp'], pl:[505,165,'+'], sqr:[685,75,'√'], cos:[685,255,'cos'], pl2:[865,165,'+'] };
+  const EDGES = [ ['x','sq'],['sq','a'],['a','exp'],['exp','b'],['a','pl'],['b','pl'],['pl','c'],
+                  ['c','sqr'],['sqr','d'],['c','cos'],['cos','e'],['d','pl2'],['e','pl2'],['pl2','f'] ];
+  // step definitions: forward 0..5 reveal a..f ; 6 seed f ; 7..12 blame d,e,c,b,a,x
+  const FORD = ['a','b','c','d','e','f'];
+  const BORD = ['f','d','e','c','b','a','x'];
+
+  function compute(x){
+    const a=x*x, b=Math.exp(a), c=a+b, d=Math.sqrt(c), e=Math.cos(c), f=d+e;
+    const gf=1, gd=1, ge=1;
+    const gc = gd*(1/(2*Math.sqrt(c))) + ge*(-Math.sin(c));
+    const gb = gc*1;
+    const ga = gb*Math.exp(a) + gc*1;
+    const gx = ga*2*x;
+    return { v:{x,a,b,c,d,e,f}, g:{x:gx,a:ga,b:gb,c:gc,d:gd,e:ge,f:gf},
+             loc:{ax:2*x, ba:Math.exp(a), dc:1/(2*Math.sqrt(c)), ec:-Math.sin(c)} };
+  }
+
+  const stepText = (k,R) => {
+    const t = [];
+    t[0] = ()=>`<b>Forward 1.</b> <span class="fwd">a = x² = ${fmt(R.v.a)}</span>. Write it down — we will reuse it.`;
+    t[1] = ()=>`<b>Forward 2.</b> <span class="fwd">b = eᵃ = ${fmt(R.v.b)}</span>. One exponential, computed once, cached forever.`;
+    t[2] = ()=>`<b>Forward 3.</b> <span class="fwd">c = a + b = ${fmt(R.v.c)}</span>. This is the chunk that was recomputed over and over in the slide-5 nightmare — here it has a name and is computed <i>once</i>.`;
+    t[3] = ()=>`<b>Forward 4.</b> <span class="fwd">d = √c = ${fmt(R.v.d)}</span>.`;
+    t[4] = ()=>`<b>Forward 5.</b> <span class="fwd">e = cos c = ${fmt(R.v.e)}</span>.`;
+    t[5] = ()=>`<b>Forward 6.</b> <span class="fwd">f = d + e = ${fmt(R.v.f)}</span>. Function evaluated in 6 tiny steps. Now: the derivative, at the same cost.`;
+    t[6] = ()=>`<b>Backward seed.</b> <span class="bwd">∂f/∂f = 1</span> — the output’s sensitivity to itself. Blame always starts as 1 at the end.`;
+    t[7] = ()=>`<b>Backward.</b> d has one outgoing arrow (to f, rate 1): <span class="bwd">δd = 1·1 = 1</span>.`;
+    t[8] = ()=>`<b>Backward.</b> e likewise: <span class="bwd">δe = 1·1 = 1</span>.`;
+    t[9] = ()=>`<b>Backward — fan-out = add across paths!</b> c feeds <i>two</i> arrows: via d (rate 1/(2√c) = ${fmt(R.loc.dc)}) and via e (rate −sin c = ${fmt(R.loc.ec)}). <span class="bwd">δc = 1·${fmt(R.loc.dc)} + 1·(${fmt(R.loc.ec)}) = ${fmt(R.g.c)}</span>.`;
+    t[10]= ()=>`<b>Backward.</b> b feeds only c (rate 1): <span class="bwd">δb = δc = ${fmt(R.g.b)}</span>.`;
+    t[11]= ()=>`<b>Backward — second fan-out.</b> a feeds b (rate eᵃ = ${fmt(R.loc.ba)}) and c (rate 1): <span class="bwd">δa = ${fmt(R.g.b)}·${fmt(R.loc.ba)} + ${fmt(R.g.c)}·1 = ${fmt(R.g.a)}</span>. Note we <i>reused</i> eᵃ from the forward pass.`;
+    t[12]= ()=>`<b>Backward — done.</b> <span class="bwd">δx = δa · 2x = ${fmt(R.g.a)} × ${fmt(R.loc.ax)} = <b>${fmt(R.g.x)}</b></span>. That equals the monstrous closed-form derivative — to the last digit — after ~6 multiplications and additions. <i>Derivative ≈ cost of the function itself.</i>`;
+    return t[k]();
+  };
+
+  let stepIdx = -1; // -1 = nothing revealed
+  const TOTAL = 13;
+
+  function build(){
+    const ns = document.getElementById('nodes'), es = document.getElementById('edges'), ls = document.getElementById('labels');
+    let eh='';
+    for(const [u,w] of EDGES){
+      const p = NV[u]||[NO[u][0],NO[u][1]], q = NV[w]||[NO[w][0],NO[w][1]];
+      const dx=q[0]-p[0], dy=q[1]-p[1], L=Math.hypot(dx,dy);
+      const r1 = NV[u]?24:20, r2 = NV[w]?27:23;
+      eh += `<line x1="${p[0]+dx/L*r1}" y1="${p[1]+dy/L*r1}" x2="${q[0]-dx/L*r2}" y2="${q[1]-dy/L*r2}" marker-end="url(#arr)"/>`;
+    }
+    es.innerHTML = eh;
+    let nh='';
+    for(const k in NO){ const [x,y,t]=NO[k];
+      nh += `<g id="op_${k}"><rect x="${x-22}" y="${y-16}" width="44" height="32" rx="6" fill="#ffeed9" stroke="#8a6d4a"/><text x="${x}" y="${y+5}" text-anchor="middle" font-size="14">${t}</text></g>`; }
+    for(const k in NV){ const [x,y]=NV[k];
+      nh += `<g id="nd_${k}"><circle cx="${x}" cy="${y}" r="24" fill="#e8f0fa" stroke="#3d5a78" stroke-width="1.5"/><text x="${x}" y="${y+5}" text-anchor="middle" font-size="16" font-style="italic">${k}</text></g>`; }
+    ns.innerHTML = nh;
+    let lh='';
+    for(const k in NV){ const [x,y]=NV[k];
+      lh += `<text id="fv_${k}" x="${x}" y="${y+45}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--fwd)"></text>`;
+      lh += `<text id="bv_${k}" x="${x}" y="${y-33}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--bwd)"></text>`; }
+    // local rate labels near ops
+    lh += `<text x="145" y="208" text-anchor="middle" font-size="11.5" fill="#7a8a99" id="lr_sq"></text>`;
+    lh += `<text x="305" y="34" text-anchor="middle" font-size="11.5" fill="#7a8a99" id="lr_exp"></text>`;
+    lh += `<text x="505" y="208" text-anchor="middle" font-size="11.5" fill="#7a8a99">1, 1</text>`;
+    lh += `<text x="668" y="34" text-anchor="middle" font-size="11.5" fill="#7a8a99" id="lr_sqr"></text>`;
+    lh += `<text x="668" y="298" text-anchor="middle" font-size="11.5" fill="#7a8a99" id="lr_cos"></text>`;
+    lh += `<text x="865" y="208" text-anchor="middle" font-size="11.5" fill="#7a8a99">1, 1</text>`;
+    ls.innerHTML = lh;
+  }
+
+  function render(){
+    const x = parseFloat(document.getElementById('xslider').value);
+    document.getElementById('xval').textContent = x.toFixed(2);
+    const R = compute(x);
+    document.getElementById('lr_sq').textContent  = `2x = ${fmt(R.loc.ax,3)}`;
+    document.getElementById('lr_exp').textContent = `eᵃ = ${fmt(R.loc.ba,3)}`;
+    document.getElementById('lr_sqr').textContent = `1/(2√c) = ${fmt(R.loc.dc,3)}`;
+    document.getElementById('lr_cos').textContent = `−sin c = ${fmt(R.loc.ec,3)}`;
+    // x value always shown
+    document.getElementById('fv_x').textContent = fmt(R.v.x,2);
+    for(const n of FORD){
+      const i = FORD.indexOf(n);
+      document.getElementById('fv_'+n).textContent = (stepIdx >= i) ? fmt(R.v[n]) : '';
+    }
+    for(const n of BORD){
+      const i = BORD.indexOf(n)+6;
+      document.getElementById('bv_'+n).textContent = (stepIdx >= i) ? fmt(R.g[n]) : '';
+    }
+    const ex = document.getElementById('gexplain');
+    if(stepIdx < 0){
+      ex.innerHTML = `Ready. <b>x = ${x.toFixed(2)}</b>. Click <b>Step ▶</b> to begin the forward pass. (At x = 1.00 you can match every number against the lecture and the study guide.)`;
+    } else {
+      ex.innerHTML = stepText(stepIdx, R) + `<div class="note" style="margin-top:6px">step ${stepIdx+1} / ${TOTAL}${stepIdx>=6?' · backward':' · forward'}</div>`;
+    }
+    document.getElementById('gstep').disabled = stepIdx >= TOTAL-1;
+    document.getElementById('gback').disabled = stepIdx < 0;
+  }
+
+  return {
+    init(){
+      build();
+      document.getElementById('xslider').addEventListener('input', render);
+      document.getElementById('gstep').onclick = ()=>{ if(stepIdx<TOTAL-1){stepIdx++; render();} };
+      document.getElementById('gback').onclick = ()=>{ if(stepIdx>=0){stepIdx--; render();} };
+      document.getElementById('gall').onclick  = ()=>{ stepIdx = TOTAL-1; render(); };
+      document.getElementById('greset').onclick= ()=>{ stepIdx = -1; render(); };
+      render();
+    },
+    compute
+  };
+})();
+
+/* ============================================================
+   SECTION 2 — sigmoid valve
+   ============================================================ */
+const V = (() => {
+  const W=1010, X0=70, X1=620, ZMIN=-8, ZMAX=8;
+  const xz = z => X0 + (z-ZMIN)/(ZMAX-ZMIN)*(X1-X0);
+  const ysig = a => 130 - a*100;          // sigmoid panel: y for a in [0,1]
+  const ybell = s => 330 - s*320;         // slope panel: y for s in [0,0.25] → 320px tall *but capped; use s*320 → 0.25→80px
+
+  function path(fn,ymap){
+    let d='';
+    for(let z=ZMIN; z<=ZMAX+1e-9; z+=0.2){
+      d += (d?' L':'M') + xz(z).toFixed(1) + ',' + ymap(fn(z)).toFixed(1);
+    }
+    return d;
+  }
+
+  function build(){
+    const s = document.getElementById('vsvg');
+    let h = '';
+    // ---- sigmoid panel ----
+    h += `<line x1="${X0-10}" y1="130" x2="${X1+14}" y2="130" stroke="#9fb0c0"/>`;
+    h += `<line x1="${xz(0)}" y1="22" x2="${xz(0)}" y2="135" stroke="#9fb0c0"/>`;
+    h += `<line x1="${X0-6}" y1="${ysig(1)}" x2="${X1+10}" y2="${ysig(1)}" stroke="#c9d4df" stroke-dasharray="5 4"/>`;
+    h += `<text x="${X0-16}" y="${ysig(1)+4}" font-size="11" fill="#7a8a99" text-anchor="end">1</text>`;
+    h += `<text x="${X0-16}" y="${ysig(0.5)+4}" font-size="11" fill="#7a8a99" text-anchor="end">0.5</text>`;
+    h += `<text x="${X1+24}" y="134" font-size="12" fill="#7a8a99">Z</text>`;
+    h += `<text x="${xz(0)+8}" y="30" font-size="12" fill="#557">a = σ(Z)</text>`;
+    h += `<path d="${path(sig,ysig)}" stroke="var(--fwd)" stroke-width="2.6" fill="none"/>`;
+    h += `<line id="tang" stroke="var(--bwd)" stroke-width="2"/>`;
+    h += `<circle id="dotA" r="6" fill="var(--fwd)"/>`;
+    // ---- slope panel ----
+    h += `<line x1="${X0-10}" y1="330" x2="${X1+14}" y2="330" stroke="#9fb0c0"/>`;
+    h += `<line x1="${xz(0)}" y1="240" x2="${xz(0)}" y2="335" stroke="#9fb0c0"/>`;
+    h += `<line x1="${X0-6}" y1="${ybell(0.25)}" x2="${X1+10}" y2="${ybell(0.25)}" stroke="#c9d4df" stroke-dasharray="5 4"/>`;
+    h += `<text x="${X0-16}" y="${ybell(0.25)+4}" font-size="11" fill="#7a8a99" text-anchor="end">0.25</text>`;
+    h += `<text x="${X1+24}" y="334" font-size="12" fill="#7a8a99">Z</text>`;
+    h += `<text x="${xz(0)+8}" y="248" font-size="12" fill="#a55">slope a(1−a) — “how open”</text>`;
+    h += `<path d="${path(z=>{const a=sig(z);return a*(1-a);},ybell)}" stroke="var(--bwd)" stroke-width="2.6" fill="none"/>`;
+    h += `<circle id="dotS" r="6" fill="var(--bwd)"/>`;
+    h += `<line id="link" stroke="#b9c6d2" stroke-dasharray="4 4"/>`;
+    // ---- valve glyph on the right ----
+    h += `<g id="valve">`;
+    h += `<text x="815" y="40" font-size="13" fill="#445" text-anchor="middle" font-weight="600">the valve, drawn</text>`;
+    h += `<line x1="680" y1="130" x2="950" y2="130" stroke="#9fb0c0" stroke-width="1.6"/>`;
+    h += `<line id="vt" x1="815" y1="70" x2="815" y2="120" stroke="#33414f" stroke-width="7" stroke-linecap="round"/>`;
+    h += `<line id="vb" x1="815" y1="190" x2="815" y2="140" stroke="#33414f" stroke-width="7" stroke-linecap="round"/>`;
+    h += `<text id="vin" x="930" y="115" font-size="12.5" fill="var(--bwd)" text-anchor="end" font-weight="600">← blame in = 1.0</text>`;
+    h += `<text id="vout" x="690" y="115" font-size="12.5" fill="var(--bwd)" font-weight="600"></text>`;
+    h += `<text id="vgap" x="815" y="215" font-size="11.5" fill="#7a8a99" text-anchor="middle"></text>`;
+    h += `</g>`;
+    s.innerHTML = h;
+  }
+
+  function render(){
+    const z = parseFloat(document.getElementById('zslider').value);
+    const a = sig(z), sl = a*(1-a);
+    document.getElementById('zval').textContent = z.toFixed(1);
+    document.getElementById('aval').textContent = fmt(a);
+    document.getElementById('sval').textContent = fmt(sl);
+    document.getElementById('s2').textContent = fmt(sl,3);
+    document.getElementById('bout').textContent = fmt(sl,3);
+    const px = xz(z), pya = ysig(a), pys = ybell(sl);
+    const dA = document.getElementById('dotA'); dA.setAttribute('cx',px); dA.setAttribute('cy',pya);
+    const dS = document.getElementById('dotS'); dS.setAttribute('cx',px); dS.setAttribute('cy',pys);
+    const lk = document.getElementById('link');
+    lk.setAttribute('x1',px); lk.setAttribute('y1',pya+8); lk.setAttribute('x2',px); lk.setAttribute('y2',pys-8);
+    // tangent: slope in screen coords = sl * 100px per unit a / px per unit z
+    const pxPerZ = (X1-X0)/(ZMAX-ZMIN), dy = sl*100, dx = pxPerZ;
+    const n = Math.hypot(dx,dy), ux=dx/n, uy=dy/n, L=42;
+    const t = document.getElementById('tang');
+    t.setAttribute('x1',px-ux*L); t.setAttribute('y1',pya+uy*L);
+    t.setAttribute('x2',px+ux*L); t.setAttribute('y2',pya-uy*L);
+    // valve gap: opening proportional to sl (max .25 → 60px half-gap)
+    const half = 4 + sl/0.25*28;
+    document.getElementById('vt').setAttribute('y2',130-half);
+    document.getElementById('vb').setAttribute('y2',130+half);
+    document.getElementById('vout').textContent = `← out = ${fmt(sl,3)}`;
+    document.getElementById('vgap').textContent = `opening = a(1−a) = ${fmt(sl,3)}`;
+  }
+
+  function bars(){
+    const el = document.getElementById('bars');
+    let h='';
+    for(let k=0;k<=4;k++){
+      const v = Math.pow(0.25,k);
+      h += `<div style="text-align:center"><div class="vbar" style="height:${Math.max(2,v*140)}px"></div><div class="barlbl">${k===0?'1':v.toFixed(k<3?2:4)}<br>${k} layer${k===1?'':'s'}</div></div>`;
+    }
+    el.innerHTML = h;
+  }
+
+  return { init(){ build(); bars(); document.getElementById('zslider').addEventListener('input',render); render(); } };
+})();
+
+/* ============================================================
+   SECTION 3 — one layer, step by step
+   ============================================================ */
+const L = (() => {
+  // fixed data (matches the study guide §2.11 exactly)
+  const x=[1,2], A=[[0.1,0.3],[0.2,0.4]], b=[0.5,-0.5], y=[1,0];
+  const Z=[A[0][0]*x[0]+A[0][1]*x[1]+b[0], A[1][0]*x[0]+A[1][1]*x[1]+b[1]];
+  const a=[sig(Z[0]),sig(Z[1])];
+  const loss=0.5*((a[0]-y[0])**2+(a[1]-y[1])**2);
+  const da=[a[0]-y[0],a[1]-y[1]];
+  const sl=[a[0]*(1-a[0]),a[1]*(1-a[1])];
+  const dZ=[da[0]*sl[0],da[1]*sl[1]];
+  const dA=[[dZ[0]*x[0],dZ[0]*x[1]],[dZ[1]*x[0],dZ[1]*x[1]]];
+  const dx=[A[0][0]*dZ[0]+A[1][0]*dZ[1], A[0][1]*dZ[0]+A[1][1]*dZ[1]];
+
+  const vec = (v,cls,id) => `<span class="mtx brk" ${id?`id="${id}"`:''}><span class="mtxcol">${v.map((t,i)=>`<span class="cell ${cls||''}" data-i="${i}">${typeof t==='number'?fmt(t):t}</span>`).join('')}</span></span>`;
+  const mat = (M,cls,id) => `<span class="mtx brk" ${id?`id="${id}"`:''}>${[0,1].map(j=>`<span class="mtxcol">${[0,1].map(i=>`<span class="cell ${cls||''}" data-i="${i}" data-j="${j}">${fmt(M[i][j])}</span>`).join('')}</span>`).join('')}</span>`;
+
+  const steps = [
+    { st:'0', text:`<b>Setup.</b> Input <span class="fwd">x = [1, 2]ᵀ</span>, weights <span class="prm">A = [[0.1, 0.3],[0.2, 0.4]]</span>, bias <span class="prm">b = [0.5, −0.5]ᵀ</span>, target y = [1, 0]ᵀ, Loss = ½‖a−y‖². Click <b>Step ▶</b>.`,
+      mats: ()=>`<span class="bigval"><span class="fwd">x</span> = ${vec(x,'hl-f')} <span class="prm">A</span> = ${mat(A)} <span class="prm">b</span> = ${vec(b)} y = ${vec(y)}</span>` },
+    { st:'1', text:`<b>Forward 1 — mix.</b> <span class="fwd">Z = A x + b</span>. Row i of A dot x, plus bᵢ: Z₁ = 0.1·1 + 0.3·2 + 0.5 = <span class="fwd">1.2</span>; Z₂ = 0.2·1 + 0.4·2 − 0.5 = <span class="fwd">0.5</span>.`,
+      mats: ()=>`<span class="bigval"><span class="fwd">Z</span> = ${vec(Z,'hl-f')}</span>` },
+    { st:'2', text:`<b>Forward 2 — squash.</b> <span class="fwd">a = σ(Z)</span>, element-wise: a₁ = σ(1.2) = <span class="fwd">${fmt(a[0])}</span>, a₂ = σ(0.5) = <span class="fwd">${fmt(a[1])}</span>. <i>Cache a — its valve slopes are free later.</i>`,
+      mats: ()=>`<span class="bigval"><span class="fwd">a</span> = ${vec(a,'hl-f')}</span>` },
+    { st:'3', text:`<b>Forward 3 — loss.</b> Loss = ½‖a − y‖² = ½[(${fmt(a[0],3)}−1)² + (${fmt(a[1],3)}−0)²] = <b>${fmt(loss)}</b>. One number. Now we walk backwards.`,
+      mats: ()=>`<span class="bigval">Loss = <b>${fmt(loss)}</b></span>` },
+    { st:'3', text:`<b>Backward 1 — seed at the loss.</b> <span class="bwd">δ⁽ᵃ⁾ = ∂Loss/∂a = a − y</span>. Output 1 is too low (−0.23…), output 2 is too high (+0.62…) — blame with signs.`,
+      mats: ()=>`<span class="bigval"><span class="bwd">δ⁽ᵃ⁾</span> = ${vec(a,'hl-f')} − ${vec(y)} = ${vec(da,'hl-b')}</span>` },
+    { st:'2', text:`<b>Backward 2 — rule (5), un-squash.</b> Scale each blame by its valve’s opening a(1−a): openings = [${fmt(sl[0])}, ${fmt(sl[1])}]. <span class="bwd">δ⁽ᶻ⁾ = δ⁽ᵃ⁾ ⊙ a ⊙ (1−a) = [${fmt(dZ[0])}, ${fmt(dZ[1])}]</span>. The diagonal Jacobian in action — no mixing between wires.`,
+      mats: ()=>`<span class="bigval"><span class="bwd">δ⁽ᶻ⁾</span> = ${vec(da,'hl-b')} ⊙ ${vec(sl,'hl-f')} = ${vec(dZ,'hl-b')}</span>` },
+    { st:'1', text:`<b>Backward 3 — rule (6), blame × signal.</b> <span class="bwd">∂Loss/∂A = δ⁽ᶻ⁾ xᵀ</span> — an outer product: cell (i,j) = δᵢ⁽ᶻ⁾ · xⱼ. <b>Hover any cell</b> to see which blame and which signal made it. Column 2 is double column 1 because input x₂ = 2 is twice as loud.`,
+      mats: ()=>`<span class="bigval"><span class="bwd">δ⁽ᶻ⁾</span> = ${vec(dZ,'',`vDZ`)} <span class="fwd">xᵀ</span> = <span class="mtx brk" id="vX"><span class="mtxcol"><span class="cell" data-j="0">1</span></span><span class="mtxcol"><span class="cell" data-j="1">2</span></span></span> &nbsp;⇒&nbsp; ∂Loss/∂<span class="prm">A</span> = ${mat(dA,'',`vDA`)}</span>`,
+      hover:true },
+    { st:'1', text:`<b>Backward 4 — rule (7).</b> The bias is a weight on a permanent input of 1, so its blame is copied straight down: <span class="bwd">∂Loss/∂b = δ⁽ᶻ⁾</span>.`,
+      mats: ()=>`<span class="bigval">∂Loss/∂<span class="prm">b</span> = ${vec(dZ,'hl-b')}</span>` },
+    { st:'0', text:`<b>Backward 5 — rule (8), reverse the wires.</b> Each input fed <i>every</i> output, so its blame sums over outputs — that sum is <span class="prm">Aᵀ</span><span class="bwd">δ⁽ᶻ⁾</span>: <span class="bwd">∂Loss/∂x = [${fmt(dx[0])}, ${fmt(dx[1])}]ᵀ</span>. This vector is handed to the layer below as <i>its</i> δ⁽ᵃ⁾ — and the same four rules repeat there. <b>That is backpropagation.</b>`,
+      mats: ()=>`<span class="bigval">∂Loss/∂<span class="fwd">x</span> = <span class="prm">Aᵀ</span>${vec(dZ,'hl-b')} = ${vec(dx,'hl-b')}</span>` },
+  ];
+
+  let k = 0;
+  function render(){
+    const s = steps[k];
+    document.getElementById('lexplain').innerHTML = s.text;
+    document.getElementById('lmats').innerHTML = s.mats();
+    document.getElementById('lcount').textContent = `step ${k} / ${steps.length-1}`;
+    document.querySelectorAll('#pipe .stage').forEach(el=>{
+      el.classList.toggle('active', el.dataset.st===s.st || (s.st==='1b'&&el.dataset.st==='1b'));
+    });
+    document.getElementById('lstep').disabled = k>=steps.length-1;
+    document.getElementById('lback').disabled = k<=0;
+    if(s.hover){
+      const da_ = document.getElementById('vDA');
+      if(da_){
+        da_.querySelectorAll('.cell').forEach(c=>{
+          c.style.cursor='pointer';
+          c.addEventListener('mouseenter',()=>{
+            const i=c.dataset.i, j=c.dataset.j;
+            c.classList.add('hl-r');
+            document.querySelectorAll(`#vDZ .cell[data-i="${i}"]`).forEach(e=>e.classList.add('hl-b'));
+            document.querySelectorAll(`#vX .cell[data-j="${j}"]`).forEach(e=>e.classList.add('hl-f'));
+          });
+          c.addEventListener('mouseleave',()=>{
+            c.classList.remove('hl-r');
+            document.querySelectorAll('#vDZ .cell').forEach(e=>e.classList.remove('hl-b'));
+            document.querySelectorAll('#vX .cell').forEach(e=>e.classList.remove('hl-f'));
+          });
+        });
+      }
+    }
+  }
+  return { init(){
+      document.getElementById('lstep').onclick=()=>{if(k<steps.length-1){k++;render();}};
+      document.getElementById('lback').onclick=()=>{if(k>0){k--;render();}};
+      document.getElementById('lreset').onclick=()=>{k=0;render();};
+      render();
+    },
+    /* exposed for testing */ _t:{Z,a,loss,da,sl,dZ,dA,dx}
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', ()=>{ G.init(); V.init(); L.init(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding PCA: A Visual & Mathematical Journey</title>
+    
+    <!-- MathJax for rendering mathematics -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- D3.js for visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Numeric.js for SVD -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+    <style>
+        body {
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+            margin-top: 50px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+
+        .math-block {
+            background-color: #f0f4f8;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .interactive-section {
+            margin-top: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        #visualization {
+            width: 100%;
+            height: 500px;
+            background-color: #fff;
+            margin: 20px 0;
+            border: 1px solid #eee;
+        }
+        
+        #image-demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .image-box {
+            text-align: center;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        canvas {
+            border: 1px solid #ccc;
+            background: white;
+            image-rendering: pixelated; /* Keep it sharp for small images */
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        input[type=range] {
+            width: 100%;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            padding: 10px;
+        }
+        
+        .stat-title {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* D3 Styling */
+        .point {
+            fill: #3498db;
+            opacity: 0.6;
+            stroke: none;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #ccc;
+            shape-rendering: crispEdges;
+        }
+
+        .pc-line {
+            stroke-width: 3px;
+            stroke-linecap: round;
+        }
+
+        .pc1 {
+            stroke: #e74c3c; /* Red for PC1 */
+        }
+
+        .pc2 {
+            stroke: #27ae60; /* Green for PC2 */
+        }
+        
+        .projection-line {
+            stroke: #3498db;
+            stroke-width: 1;
+            stroke-dasharray: 4;
+            opacity: 0.3;
+        }
+
+        .mean-point {
+            fill: #2c3e50;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Demystifying PCA: The Math & The Intuition</h1>
+        
+        <div id="content">
+            <section>
+                <h2>1. The Goal: Maximizing Variance</h2>
+                <p>
+                    Principal Component Analysis (PCA) is a powerful method for dimensionality reduction. 
+                    Imagine you have data points in 2D (like the visualization below), but you want to represent them using a single number (1D). 
+                    Which line should you project them onto?
+                </p>
+                <p>
+                    <strong>The Intuition of "Shadows":</strong> Think of the projection as casting a shadow of the data points onto a wall (a line). 
+                    If the wall is perpendicular to the data's spread, the shadow will be a small, dense clump. We lose the "shape" of the data. 
+                    However, if the wall aligns with the widest spread of the data, the shadow will be wide and retain the relative distances between points.
+                </p>
+                <p>
+                    <strong>Why Variance?</strong> High variance = High Information. If a variable doesn't change (variance = 0), it tells us nothing. 
+                    We want to find the axis where the "shadow" (projection) has the maximum possible variance.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. The Data Matrix & Centering</h2>
+                <p>
+                    Let our dataset be a matrix \( X \in \mathbb{R}^{n \times d} \), where \( n \) is the number of samples (rows) and \( d \) is the number of features (columns).
+                    $$ X = \begin{bmatrix} x_{1,1} & \dots & x_{1,d} \\ \vdots & \ddots & \vdots \\ x_{n,1} & \dots & x_{n,d} \end{bmatrix} $$
+                </p>
+                <p>
+                    <strong>Step 1: Centering.</strong> We shift the origin of our coordinate system to the center of mass of the data. 
+                    We calculate the mean vector \( \bar{x} \) and subtract it from every row. 
+                    This ensures that the new mean is exactly 0.
+                    $$ x_{new} = x_{old} - \bar{x} $$
+                    This simplification is crucial because it allows us to calculate variance simply as the sum of squared values, without needing to subtract the mean again later.
+                </p>
+            </section>
+
+            <section>
+                <h2>3. Intuition: What does Covariance tell us?</h2>
+                <p>
+                    Before doing any projection, let's look at the relationship between our features. 
+                    The <strong>Covariance Matrix</strong> \( C \) summarizes how our variables move together.
+                    For 2D data (x, y), it looks like this:
+                    $$ C = \begin{bmatrix} \text{Var}(x) & \text{Cov}(x,y) \\ \text{Cov}(y,x) & \text{Var}(y) \end{bmatrix} $$
+                </p>
+                <ul>
+                    <li><strong>Diagonal Terms (\(\text{Var}(x), \text{Var}(y)\)):</strong> Describe the spread along each original axis.</li>
+                    <li><strong>Off-Diagonal Terms (\(\text{Cov}(x,y)\)):</strong> Describe the correlation.
+                        <ul>
+                            <li><strong>Positive:</strong> When X increases, Y tends to increase (Data looks like /).</li>
+                            <li><strong>Negative:</strong> When X increases, Y tends to decrease (Data looks like \).</li>
+                            <li><strong>Zero:</strong> No linear relationship (Data looks like a round cloud).</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>
+                    <strong>The PCA Insight:</strong> If covariance is non-zero, there is "redundancy". 
+                    PCA rotates our axes to align with the data's natural shape, making the new off-diagonal terms zero. 
+                    This means the new features (Principal Components) are <strong>uncorrelated</strong>.
+                </p>
+            </section>
+
+            <section>
+                <h2>4. Projecting the Data</h2>
+                <p>
+                    We seek a unit vector \( w \) (\( ||w|| = 1 \)) representing our new axis.
+                    To project a data vector \( x_i \) onto \( w \), we use the <strong>Dot Product</strong>.
+                    $$ z_i = x_i \cdot w = x_i^T w $$
+                </p>
+                <p>
+                    Geometrically, since \( ||w||=1 \), this value \( z_i \) represents the length of the vector \( x_i \) along the direction of \( w \).
+                </p>
+                <p>
+                    In matrix form, the vector of all projections \( z \in \mathbb{R}^n \) is:
+                    $$ z = Xw $$
+                </p>
+            </section>
+
+            <section>
+                <h2>5. The Variance of the Projection</h2>
+                <p>
+                    We want to maximize the variance of \( z \). Since we centered \( X \), the mean of \( z \) is also 0.
+                    $$ \text{Var}(z) = \frac{1}{n-1} \sum_{i=1}^{n} (z_i - 0)^2 $$
+                </p>
+                <p>
+                    Let's expand this using matrix algebra. The sum of squares is the dot product of the vector \( z \) with itself:
+                    $$ \sum z_i^2 = z^T z $$
+                    Substituting \( z = Xw \):
+                    $$ z^T z = (Xw)^T (Xw) = w^T X^T X w $$
+                </p>
+                <p>
+                    Therefore, the variance is:
+                    $$ \text{Var}(z) = \frac{1}{n-1} w^T X^T X w = w^T \left( \frac{X^T X}{n-1} \right) w $$
+                </p>
+                <p>
+                    The term in the middle is the Sample <strong>Covariance Matrix</strong>, \( C \).
+                    $$ \text{Objective: Maximize } w^T C w \quad \text{ subject to } w^T w = 1 $$
+                </p>
+            </section>
+
+            <section>
+                <h2>6. The Dual Perspective: Minimizing Error</h2>
+                <p>
+                    There is another way to look at PCA. Instead of <strong>maximizing variance</strong> along the projection, we can think about <strong>minimizing the reconstruction error</strong>.
+                </p>
+                <p>
+                    Consider a single data point vector \( x_i \). We project it onto \( w \) to get the approximation \( \hat{x}_i = (x_i^T w)w \).
+                    The error vector is the difference: \( e_i = x_i - \hat{x}_i \).
+                </p>
+                <p>
+                    <strong>Pythagorean Theorem in High Dimensions:</strong> Since the error vector is orthogonal to the projection, we have:
+                    $$ ||x_i||^2 = ||\hat{x}_i||^2 + ||e_i||^2 $$
+                </p>
+                <p>
+                    Summing over all points:
+                    $$ \sum ||x_i||^2 = \sum ||\hat{x}_i||^2 + \sum ||e_i||^2 $$
+                </p>
+                <div class="math-block">
+                    <strong>The Insight:</strong> The term \( \sum ||x_i||^2 \) is constant (it's just the total energy of our dataset).
+                    Therefore, <strong>Maximizing the projection length</strong> (\( \sum ||\hat{x}_i||^2 \), which is variance) is mathematically equivalent to <strong>Minimizing the error</strong> (\( \sum ||e_i||^2 \)).
+                </div>
+            </section>
+
+            <section>
+                <h2>7. The Proof: Lagrange Multipliers</h2>
+                <p>
+                    To solve this constrained optimization problem, we define the Lagrangian \( \mathcal{L} \). 
+                    We introduce a Lagrange multiplier \( \lambda \) to enforce the constraint \( w^T w = 1 \).
+                    $$ \mathcal{L}(w, \lambda) = w^T C w - \lambda (w^T w - 1) $$
+                </p>
+                <div class="math-block">
+                    <strong>Step-by-Step Derivative:</strong><br>
+                    1. Derivative of \( w^T C w \) w.r.t \( w \): Since \( C \) is symmetric, this is \( 2Cw \).<br>
+                    2. Derivative of \( \lambda w^T w \) w.r.t \( w \): This is \( 2\lambda w \).<br>
+                    3. Set the total derivative to zero:
+                    $$ \nabla_w \mathcal{L} = 2Cw - 2\lambda w = 0 $$
+                </div>
+                <p>
+                    Dividing by 2, we get the famous Eigenvalue Equation:
+                    $$ Cw = \lambda w $$
+                </p>
+                <p>
+                    <strong>Interpretation:</strong> The optimal direction \( w \) must be an <strong>Eigenvector</strong> of the Covariance Matrix.
+                    But which one? Let's check the variance value at this solution:
+                    $$ \text{Variance} = w^T C w = w^T (\lambda w) = \lambda (w^T w) = \lambda (1) = \lambda $$
+                </p>
+                <p>
+                    The variance is exactly equal to the <strong>Eigenvalue</strong> \( \lambda \). 
+                    To maximize variance, we must choose the eigenvector corresponding to the <strong>largest eigenvalue</strong>.
+                </p>
+            </section>
+
+            <section>
+                <h2>8. Connection to SVD</h2>
+                <p>
+                    Singular Value Decomposition (SVD) decomposes the data matrix \( X \) directly:
+                    $$ X = U \Sigma V^T $$
+                    Where \( \Sigma \) is a diagonal matrix of singular values \( \sigma_i \).
+                </p>
+                <p>
+                    Let's derive the covariance matrix \( C \) using SVD:
+                    $$ C \propto X^T X = (U \Sigma V^T)^T (U \Sigma V^T) = V \Sigma^T U^T U \Sigma V^T $$
+                </p>
+                <p>
+                    Since \( U \) is orthogonal, \( U^T U = I \). Also \( \Sigma \) is diagonal, so \( \Sigma^T = \Sigma \).
+                    $$ C \propto V \Sigma^2 V^T $$
+                </p>
+                <p>
+                    This matches the Eigendecomposition form \( V \Lambda V^T \).
+                    Thus:
+                    <ul>
+                        <li>The <strong>Right Singular Vectors</strong> (\( V \)) of \( X \) are the <strong>Principal Components</strong>.</li>
+                        <li>The <strong>Singular Values</strong> (\( \sigma \)) are related to variances (\( \lambda \)) by \( \lambda_i = \frac{\sigma_i^2}{n-1} \).</li>
+                    </ul>
+                </p>
+            </section>
+
+            <section>
+                <h2>9. Why is this Important?</h2>
+                <p>
+                    Understanding PCA provides intuition for many advanced topics in Machine Learning:
+                </p>
+                <ul>
+                    <li><strong>Feature Engineering:</strong> It automatically discovers the "most important" features, combining correlated variables into a single signal.</li>
+                    <li><strong>Data Compression:</strong> As we will see below, we can reconstruct complex data (like images) using only a fraction of the original information, saving huge amounts of storage.</li>
+                    <li><strong>Noise Reduction:</strong> The lower principal components often contain "noise" or random variations. Dropping them can actually <em>improve</em> model performance by preventing overfitting.</li>
+                </ul>
+            </section>
+        </div>
+
+        <div id="demo" class="interactive-section">
+            <h2>Interactive Visualization</h2>
+            <p>Experiment with 2D data to see how the Principal Components align with the direction of maximum variance.</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="spreadX">Spread X (<span id="valSpreadX">1.0</span>)</label>
+                    <input type="range" id="spreadX" min="0.1" max="5.0" step="0.1" value="1.0">
+                </div>
+                <div class="control-group">
+                    <label for="spreadY">Spread Y (<span id="valSpreadY">3.0</span>)</label>
+                    <input type="range" id="spreadY" min="0.1" max="5.0" step="0.1" value="3.0">
+                </div>
+                <div class="control-group">
+                    <label for="correlation">Correlation (<span id="valCorr">0.8</span>)</label>
+                    <input type="range" id="correlation" min="-0.95" max="0.95" step="0.05" value="0.8">
+                </div>
+                
+                <div class="control-group" style="grid-column: span 2;">
+                    <label>Show Projections:</label>
+                    <div style="display: flex; gap: 15px;">
+                        <label style="font-weight: normal; display: flex; align-items: center;">
+                            <input type="radio" name="projType" value="none" checked style="width: auto; margin-right: 5px;"> None
+                        </label>
+                        <label style="font-weight: normal; display: flex; align-items: center;">
+                            <input type="radio" name="projType" value="pc1" style="width: auto; margin-right: 5px;"> PC1
+                        </label>
+                        <label style="font-weight: normal; display: flex; align-items: center;">
+                            <input type="radio" name="projType" value="pc2" style="width: auto; margin-right: 5px;"> PC2
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="visualization"></div>
+
+            <div class="stats-panel">
+                <div class="stat-box" id="covMatrix">
+                    <span class="stat-title">Covariance Matrix</span>
+                    <div id="cov-display"></div>
+                </div>
+                <div class="stat-box" id="eigenInfo">
+                    <span class="stat-title">Eigenvalues & Explained Variance</span>
+                    <div id="eigen-display"></div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="image-demo" class="interactive-section">
+            <h2>PCA in Action: Image Compression</h2>
+            <p>
+                PCA isn't just for 2D points. An image is just a matrix of numbers (pixels). 
+                By treating the image matrix as our data, we can use SVD to decompose it. 
+                Below is a generated 60x60 pixel pattern.
+            </p>
+            <p>
+                Adjust the slider to choose how many <strong>Principal Components</strong> to keep. 
+                Notice how we can reconstruct the image with very few components!
+            </p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="numComponents">Components to Keep (k): <span id="valK">10</span> / 60</label>
+                    <input type="range" id="numComponents" min="1" max="60" value="10">
+                </div>
+            </div>
+
+            <div id="image-demo-container">
+                <div class="image-box">
+                    <h3>Original Image (60x60)</h3>
+                    <canvas id="canvas-original" width="60" height="60"></canvas>
+                    <p>Features: 60x60 = 3600 pixels</p>
+                </div>
+                <div class="image-box">
+                    <h3>Reconstructed (Rank k)</h3>
+                    <canvas id="canvas-recon" width="60" height="60"></canvas>
+                    <div id="compression-stats" style="font-weight: bold; color: #27ae60; margin-top: 5px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Generated for educational purposes.
+        </footer>
+    </div>
+
+    <script>
+        // --- Math & Logic Section ---
+
+        const PCA_Math = {
+            // Box-Muller transform for normal distribution
+            randn: function() {
+                let u = 0, v = 0;
+                while(u === 0) u = Math.random(); 
+                while(v === 0) v = Math.random();
+                return Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+            },
+
+            // Generate 2D correlated data
+            generateData: function(n, sigmaX, sigmaY, rho) {
+                const data = [];
+                for (let i = 0; i < n; i++) {
+                    const z1 = this.randn();
+                    const z2 = this.randn();
+                    
+                    // Transform to correlated variables
+                    // x is purely based on z1
+                    const x = sigmaX * z1;
+                    // y has a component of z1 (correlation) and z2 (noise)
+                    const y = sigmaY * (rho * z1 + Math.sqrt(1 - rho * rho) * z2);
+                    
+                    data.push({ x: x, y: y });
+                }
+                return data;
+            },
+
+            // Compute Covariance Matrix of 2D data
+            computeCovariance: function(data) {
+                const n = data.length;
+                let sumX = 0, sumY = 0;
+                
+                // 1. Calculate Means
+                data.forEach(p => {
+                    sumX += p.x;
+                    sumY += p.y;
+                });
+                const meanX = sumX / n;
+                const meanY = sumY / n;
+
+                // 2. Center Data & Calculate Sum of Squares/Products
+                let sumXX = 0, sumYY = 0, sumXY = 0;
+                const centeredData = data.map(p => {
+                    const cx = p.x - meanX;
+                    const cy = p.y - meanY;
+                    sumXX += cx * cx;
+                    sumYY += cy * cy;
+                    sumXY += cx * cy;
+                    return { x: cx, y: cy };
+                });
+
+                // 3. Covariance Matrix (divide by n-1 for sample variance)
+                const covXX = sumXX / (n - 1);
+                const covYY = sumYY / (n - 1);
+                const covXY = sumXY / (n - 1);
+
+                return {
+                    matrix: [[covXX, covXY], [covXY, covYY]],
+                    means: { x: meanX, y: meanY },
+                    centeredData: centeredData
+                };
+            },
+
+            // Compute Eigenvalues and Eigenvectors for 2x2 Symmetric Matrix
+            // Matrix: [[a, b], [b, d]]
+            computeEigen: function(matrix) {
+                const a = matrix[0][0];
+                const b = matrix[0][1];
+                const d = matrix[1][1];
+
+                const trace = a + d;
+                const det = a * d - b * b;
+                
+                // Quadratic formula for Characteristic Equation: lambda^2 - trace*lambda + det = 0
+                const gap = Math.sqrt(trace * trace - 4 * det);
+                const l1 = (trace + gap) / 2;
+                const l2 = (trace - gap) / 2;
+
+                // Sort eigenvalues (descending)
+                const lambda1 = Math.max(l1, l2);
+                const lambda2 = Math.min(l1, l2);
+
+                // Compute Eigenvectors
+                // (a - lambda)x + by = 0  =>  by = -(a - lambda)x  =>  y/x = -(a - lambda)/b
+                // If b is close to 0, use the other equation or handle axis-aligned case
+                
+                const getVector = (lambda) => {
+                    if (Math.abs(b) < 1e-10) {
+                        // Diagonal matrix case
+                        if (Math.abs(a - lambda) < 1e-10) return { x: 1, y: 0 };
+                        return { x: 0, y: 1 };
+                    }
+                    const v = { x: b, y: lambda - a };
+                    // Normalize
+                    const mag = Math.sqrt(v.x * v.x + v.y * v.y);
+                    return { x: v.x / mag, y: v.y / mag };
+                };
+
+                const v1 = getVector(lambda1);
+                const v2 = getVector(lambda2);
+
+                return {
+                    values: [lambda1, lambda2],
+                    vectors: [v1, v2]
+                };
+            }
+        };
+
+        // --- Visualization & UI Logic ---
+
+        const PCA_App = {
+            width: 0,
+            height: 0,
+            svg: null,
+            xScale: null,
+            yScale: null,
+            margin: { top: 20, right: 20, bottom: 20, left: 20 },
+            
+            // Config
+            nPoints: 150,
+            
+            init: function() {
+                const container = document.getElementById('visualization');
+                this.width = container.clientWidth;
+                this.height = container.clientHeight;
+
+                this.svg = d3.select("#visualization")
+                    .append("svg")
+                    .attr("width", this.width)
+                    .attr("height", this.height);
+
+                // Setup Scales (Fixed range for stability)
+                const range = 10;
+                this.xScale = d3.scaleLinear()
+                    .domain([-range, range])
+                    .range([this.margin.left, this.width - this.margin.right]);
+                
+                this.yScale = d3.scaleLinear()
+                    .domain([-range, range])
+                    .range([this.height - this.margin.bottom, this.margin.top]);
+
+                // Draw Axes
+                const xAxis = d3.axisBottom(this.xScale).ticks(10);
+                const yAxis = d3.axisLeft(this.yScale).ticks(10);
+
+                this.svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0, ${this.yScale(0)})`)
+                    .call(xAxis);
+
+                this.svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(${this.xScale(0)}, 0)`)
+                    .call(yAxis);
+                
+                // Add groups for layers
+                this.svg.append("g").attr("id", "points-layer");
+                this.svg.append("g").attr("id", "projections-layer");
+                this.svg.append("g").attr("id", "vectors-layer");
+
+                // Setup Event Listeners
+                ['spreadX', 'spreadY', 'correlation'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', (e) => {
+                        this.updateUI();
+                    });
+                });
+
+                document.querySelectorAll('input[name="projType"]').forEach(el => {
+                    el.addEventListener('change', () => {
+                        this.updateUI();
+                    });
+                });
+
+                // Initial Draw
+                this.updateUI();
+            },
+
+            updateUI: function() {
+                // Get values
+                const sx = parseFloat(document.getElementById('spreadX').value);
+                const sy = parseFloat(document.getElementById('spreadY').value);
+                const rho = parseFloat(document.getElementById('correlation').value);
+                const projType = document.querySelector('input[name="projType"]:checked').value;
+
+                // Update Labels
+                document.getElementById('valSpreadX').textContent = sx.toFixed(1);
+                document.getElementById('valSpreadY').textContent = sy.toFixed(1);
+                document.getElementById('valCorr').textContent = rho.toFixed(2);
+
+                // 1. Generate Data
+                const data = PCA_Math.generateData(this.nPoints, sx, sy, rho);
+
+                // 2. Compute Math
+                const stats = PCA_Math.computeCovariance(data);
+                const eigen = PCA_Math.computeEigen(stats.matrix);
+
+                // 3. Update Visuals
+                this.drawData(data);
+                this.drawVectors(stats.means, eigen);
+                this.drawProjections(stats.centeredData, stats.means, eigen, projType);
+                this.updateStats(stats.matrix, eigen);
+            },
+
+            drawData: function(data) {
+                const points = this.svg.select("#points-layer")
+                    .selectAll("circle")
+                    .data(data);
+
+                points.enter()
+                    .append("circle")
+                    .attr("class", "point")
+                    .attr("r", 3)
+                    .merge(points)
+                    .attr("cx", d => this.xScale(d.x))
+                    .attr("cy", d => this.yScale(d.y));
+
+                points.exit().remove();
+            },
+
+            drawVectors: function(means, eigen) {
+                const vectorLayer = this.svg.select("#vectors-layer");
+                vectorLayer.selectAll("*").remove();
+
+                const mx = this.xScale(means.x);
+                const my = this.yScale(means.y); // Note: Y-scale is inverted in SVG, but math assumes cartesian. D3 handles mapping.
+
+                // Helper to draw arrow
+                const drawArrow = (v, lambda, color, label) => {
+                    // Scale vector length by sqrt(lambda) * constant for visibility
+                    // Eigenvalue = variance. Std dev = sqrt(variance).
+                    const scale = Math.sqrt(lambda) * 2; 
+                    
+                    const endX = means.x + v.x * scale;
+                    const endY = means.y + v.y * scale;
+
+                    // Line
+                    vectorLayer.append("line")
+                        .attr("x1", mx)
+                        .attr("y1", my)
+                        .attr("x2", this.xScale(endX))
+                        .attr("y2", this.yScale(endY))
+                        .attr("class", "pc-line")
+                        .style("stroke", color);
+
+                    // Arrowhead (simple circle for now or marker)
+                    // Let's just use a text label
+                     vectorLayer.append("text")
+                        .attr("x", this.xScale(endX) + 5)
+                        .attr("y", this.yScale(endY) - 5)
+                        .text(label)
+                        .style("fill", color)
+                        .style("font-weight", "bold");
+                };
+
+                drawArrow(eigen.vectors[0], eigen.values[0], "#e74c3c", "PC1"); // Red
+                drawArrow(eigen.vectors[1], eigen.values[1], "#27ae60", "PC2"); // Green
+            },
+
+            drawProjections: function(centeredData, means, eigen, type) {
+                const layer = this.svg.select("#projections-layer");
+                layer.selectAll("*").remove();
+
+                if (type === 'none') return;
+
+                // Select vector based on type
+                // PC1 is vectors[0], PC2 is vectors[1]
+                const v = type === 'pc1' ? eigen.vectors[0] : eigen.vectors[1];
+                
+                centeredData.forEach(p => {
+                    // Dot product for scalar projection (since v is normalized)
+                    const dot = p.x * v.x + p.y * v.y;
+                    
+                    // Projected point relative to mean
+                    const projX = dot * v.x;
+                    const projY = dot * v.y;
+
+                    // Absolute coordinates
+                    const absX = means.x + p.x;
+                    const absY = means.y + p.y;
+                    
+                    const absProjX = means.x + projX;
+                    const absProjY = means.y + projY;
+
+                    layer.append("line")
+                        .attr("x1", this.xScale(absX))
+                        .attr("y1", this.yScale(absY))
+                        .attr("x2", this.xScale(absProjX))
+                        .attr("y2", this.yScale(absProjY))
+                        .attr("class", "projection-line");
+                });
+            },
+
+            updateStats: function(matrix, eigen) {
+                // Matrix
+                const format = (n) => n.toFixed(2);
+                const covHTML = `
+                    <table style="width:100%; text-align:center;">
+                        <tr><td>${format(matrix[0][0])}</td><td>${format(matrix[0][1])}</td></tr>
+                        <tr><td>${format(matrix[1][0])}</td><td>${format(matrix[1][1])}</td></tr>
+                    </table>
+                `;
+                document.getElementById('cov-display').innerHTML = covHTML;
+
+                // Eigen info
+                const sum = eigen.values[0] + eigen.values[1];
+                const p1 = ((eigen.values[0] / sum) * 100).toFixed(1);
+                const p2 = ((eigen.values[1] / sum) * 100).toFixed(1);
+
+                const eigenHTML = `
+                    <div style="margin-bottom:5px; color:#e74c3c">
+                        PC1 (λ₁ = ${format(eigen.values[0])}): <strong>${p1}%</strong> Variance
+                    </div>
+                    <div style="color:#27ae60">
+                        PC2 (λ₂ = ${format(eigen.values[1])}): <strong>${p2}%</strong> Variance
+                    </div>
+                `;
+                document.getElementById('eigen-display').innerHTML = eigenHTML;
+            }
+        };
+
+        // --- Image Compression Demo ---
+        const ImageDemo = {
+            size: 60,
+            U: null,
+            S: null,
+            V: null,
+            
+            init: function() {
+                // 1. Generate Image Matrix
+                const matrix = this.generateImageMatrix();
+                
+                // 2. Draw Original
+                this.drawMatrix(matrix, 'canvas-original');
+                
+                // 3. Perform SVD
+                // numeric.svd(A) returns U, S, V. Note V is not transposed in numeric.js usually, let's check.
+                // numeric.svd returns {U, S, V} where A = U diag(S) V^T. 
+                // Wait, numeric.js documentation says A = U . S . V'. So V is transposed? 
+                // Actually numeric.svd(A) returns U, S, V such that U.dot(S).dot(V) is NOT A.
+                // Usually it returns V such that A = U * diag(S) * V^T.
+                // Let's rely on standard SVD definition A = U S V^T.
+                // We will implement reconstruction as sum( s[i] * u[i] * v[i]^T ).
+                
+                try {
+                    const svd = numeric.svd(matrix);
+                    this.U = svd.U;
+                    this.S = svd.S;
+                    this.V = svd.V; // In numeric.js, V is the right singular vectors (already transposed? No, usually V is the matrix of vectors). 
+                    // Let's assume standard behavior: A = U * diag(S) * transpose(V).
+                    // numeric.js docs: "res = numeric.svd(A) ... A = res.U.dot(numeric.diag(res.S)).dot(numeric.transpose(res.V))" is false usually.
+                    // Let's double check standard usage or just test.
+                    // Actually, typically V is returned as the matrix where columns are eigenvectors of A^T A.
+                } catch(e) {
+                    console.error("SVD failed", e);
+                    return;
+                }
+
+                // 4. Setup Listener
+                const slider = document.getElementById('numComponents');
+                slider.addEventListener('input', () => {
+                    this.updateReconstruction();
+                });
+                
+                // Initial Draw
+                this.updateReconstruction();
+            },
+            
+            generateImageMatrix: function() {
+                const mat = [];
+                for(let y=0; y<this.size; y++) {
+                    const row = [];
+                    for(let x=0; x<this.size; x++) {
+                        // Create a pattern: A gradient + a circle + noise
+                        let val = (x + y) / (2 * this.size); // Gradient
+                        
+                        // Circle in middle
+                        const cx = this.size/2;
+                        const cy = this.size/2;
+                        const r = Math.sqrt((x-cx)**2 + (y-cy)**2);
+                        if(r < 15) val += 0.5;
+                        if(r > 10 && r < 12) val -= 0.8; // Ring
+                        
+                        // Diagonal cross
+                        if(Math.abs(x-y) < 3 || Math.abs(x-(this.size-y)) < 3) val += 0.3;
+
+                        // Clamp 0-1
+                        val = Math.max(0, Math.min(1, val));
+                        row.push(val);
+                    }
+                    mat.push(row);
+                }
+                return mat;
+            },
+            
+            drawMatrix: function(mat, canvasId) {
+                const canvas = document.getElementById(canvasId);
+                const ctx = canvas.getContext('2d');
+                const imgData = ctx.createImageData(this.size, this.size);
+                
+                for(let y=0; y<this.size; y++) {
+                    for(let x=0; x<this.size; x++) {
+                        const val = mat[y][x] * 255;
+                        const idx = (y * this.size + x) * 4;
+                        imgData.data[idx] = val;   // R
+                        imgData.data[idx+1] = val; // G
+                        imgData.data[idx+2] = val; // B
+                        imgData.data[idx+3] = 255; // Alpha
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            },
+            
+            updateReconstruction: function() {
+                const k = parseInt(document.getElementById('numComponents').value);
+                document.getElementById('valK').textContent = k;
+                
+                // Reconstruct: M_k = Sum_{i=0 to k-1} (s[i] * u[i] * v[i]^T)
+                // Note: u[i] is the ith column of U. v[i] is the ith column of V (if V columns are vectors).
+                // Let's verify numeric.js structure: U is matrix, V is matrix. 
+                // We need to compute U_k * S_k * V_k^T.
+                
+                // Since matrix mult is expensive in JS loops, let's just sum the rank-1 matrices
+                const recon = Array(this.size).fill(0).map(() => Array(this.size).fill(0));
+                
+                for(let i=0; i<k; i++) {
+                    const s = this.S[i];
+                    // Outer product of ith column of U and ith column of V
+                    for(let r=0; r<this.size; r++) {
+                        for(let c=0; c<this.size; c++) {
+                            // U[r][i] is r-th row, i-th column
+                            // V[c][i] is c-th row, i-th column of V? 
+                            // In numeric.js V is usually NOT transposed. It is the matrix of right singular vectors.
+                            // So A = U * S * V^T. 
+                            // The ith component is s_i * u_i * v_i^T.
+                            // u_i is column i of U. v_i is column i of V.
+                            // Entry (r,c) += s * U[r][i] * V[c][i]
+                            
+                            recon[r][c] += s * this.U[r][i] * this.V[c][i];
+                        }
+                    }
+                }
+                
+                // Normalize/Clamp for display
+                // (SVD can produce values slightly outside range due to truncation)
+                const clamped = recon.map(row => row.map(v => Math.max(0, Math.min(1, v))));
+                
+                this.drawMatrix(clamped, 'canvas-recon');
+                
+                // Stats
+                const totalVar = this.S.reduce((a,b) => a + b*b, 0); // Variance ~ sum of squared singular values
+                const currentVar = this.S.slice(0, k).reduce((a,b) => a + b*b, 0);
+                const perc = (currentVar / totalVar) * 100;
+                
+                // Compression: Storing k vectors of size N + k singular values
+                // Original: N*N numbers. Compressed: k*(2N+1) numbers.
+                const originalSize = this.size * this.size;
+                const compressedSize = k * (2 * this.size + 1);
+                const ratio = originalSize / compressedSize;
+                
+                document.getElementById('compression-stats').innerHTML = 
+                    `Information Kept: ${perc.toFixed(1)}%<br>Compression Ratio: ${ratio.toFixed(1)}x`;
+            }
+        };
+
+        // Initialize when DOM is ready
+        window.onload = function() {
+            PCA_App.init();
+            ImageDemo.init();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WILP, BITS Pilani &middot; Gradient Descent (ZC416 &middot; Topic 9).</title>
+
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+  svg: { fontCache: 'global' },
+  startup: { typeset: false }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-svg.min.js"></script>
+
+<style>
+:root{
+  --bg:#070b16;
+  --bg2:#0b1120;
+  --panel:#0e1729;
+  --panel2:#121d36;
+  --line:#1f2d4d;
+  --ink:#e7edf9;
+  --muted:#93a4c8;
+  --dim:#64759c;
+  --cyan:#38f0d8;
+  --cyan2:#19c4ff;
+  --violet:#9b8cff;
+  --pink:#ff6ec7;
+  --amber:#ffcb6b;
+  --green:#62e88a;
+  --red:#ff6b81;
+  --glow: 0 0 18px rgba(56,240,216,.45);
+  --r:16px;
+  --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:
+    radial-gradient(1200px 600px at 80% -5%, rgba(25,196,255,.10), transparent 55%),
+    radial-gradient(1000px 500px at 0% 10%, rgba(155,140,255,.10), transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.65;font-size:16px;
+}
+a{color:var(--cyan2);text-decoration:none}
+
+/* layout */
+.shell{display:grid;grid-template-columns:288px 1fr;max-width:1500px;margin:0 auto}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 16px 60px;
+  border-right:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),transparent)}
+.brand{font-weight:800;letter-spacing:.3px;font-size:15px;color:#fff;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--cyan);box-shadow:var(--glow)}
+.brand small{display:block;color:var(--dim);font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.bits-logo{height:30px;width:auto;border-radius:4px;background:#fff;padding:2px 4px;flex:0 0 auto}
+.bits-credit{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+.bits-credit strong{color:var(--ink)}
+.toc{margin-top:18px;display:flex;flex-direction:column;gap:1px}
+.toc a{color:var(--muted);font-size:13.5px;padding:7px 12px;border-radius:9px;display:flex;gap:9px;align-items:center;border:1px solid transparent;transition:.15s}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:20px}
+.toc a:hover{background:var(--panel);color:var(--ink)}
+.toc a.active{background:linear-gradient(90deg,rgba(56,240,216,.16),rgba(56,240,216,.02));color:#fff;border-color:rgba(56,240,216,.35)}
+.toc a.active .n{color:var(--cyan)}
+.toc .grp{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:14px 12px 5px;font-weight:700}
+
+main{padding:0 0 120px}
+.progress{position:fixed;top:0;left:288px;right:0;height:3px;background:transparent;z-index:50}
+.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--cyan));box-shadow:var(--glow)}
+
+section{padding:64px 56px;border-bottom:1px solid var(--line);scroll-margin-top:10px}
+section:nth-child(even){background:linear-gradient(180deg,rgba(255,255,255,.012),transparent)}
+.wrap{max-width:920px;margin:0 auto}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:26px;height:2px;background:var(--cyan);display:inline-block;border-radius:2px}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.08;margin:.35em 0 .2em;font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(24px,3.4vw,34px);margin:.25em 0 .5em;font-weight:800;letter-spacing:-.01em;color:#fff}
+h3{font-size:19px;margin:1.6em 0 .5em;color:#fff;font-weight:700}
+h4{font-size:15px;margin:1.2em 0 .4em;color:var(--cyan);font-weight:700;letter-spacing:.02em}
+p{color:var(--ink)}
+.lead{font-size:18.5px;color:var(--muted)}
+.muted{color:var(--muted)}
+strong{color:#fff}
+code{font-family:var(--mono);background:var(--panel2);padding:.12em .42em;border-radius:6px;font-size:.88em;color:var(--cyan)}
+ul.muted li{margin:4px 0}
+
+/* cards & callouts */
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;margin:22px 0}
+.lab{background:linear-gradient(180deg,#0c1830,#0a1322);border:1px solid rgba(56,240,216,.28);border-radius:var(--r);padding:22px 24px;margin:26px 0;position:relative;overflow:hidden}
+.lab::before{content:"\26A1 INTERACTIVE";position:absolute;top:0;right:0;font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:#06241f;background:var(--cyan);padding:4px 12px;border-bottom-left-radius:10px;font-weight:800}
+.note{border-left:3px solid var(--violet);background:rgba(155,140,255,.07);padding:12px 18px;border-radius:0 10px 10px 0;margin:18px 0;color:var(--muted)}
+.note b,.note strong{color:#cdc4ff}
+.key{border-left:3px solid var(--amber);background:rgba(255,203,107,.07);padding:12px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.key b{color:var(--amber)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:880px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* controls */
+.ctrl{display:flex;align-items:center;gap:12px;margin:10px 0;font-size:14px}
+.ctrl label{min-width:62px;font-family:var(--mono);color:var(--muted)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:var(--line);flex:1;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--cyan);box-shadow:var(--glow);cursor:pointer;border:2px solid #06241f}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--cyan);cursor:pointer;border:2px solid #06241f}
+.val{font-family:var(--mono);color:var(--cyan);min-width:54px;text-align:right;font-size:13.5px}
+button.btn{font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;transition:.15s}
+button.btn:hover{border-color:var(--cyan);color:#fff}
+button.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button.btn.active{background:var(--cyan);color:#06241f;border-color:var(--cyan);font-weight:700}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;align-items:center}
+
+/* tables */
+table.tt{border-collapse:collapse;font-family:var(--mono);font-size:14px;margin:8px 0}
+table.tt th,table.tt td{border:1px solid var(--line);padding:8px 16px;text-align:center}
+table.tt th{background:var(--panel2);color:var(--muted)}
+table.tt td.one{color:var(--green);font-weight:700}
+table.tt td.zero{color:var(--dim)}
+.twrap{overflow-x:auto}
+.readout{font-family:var(--mono);font-size:14px;background:#06101f;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px;white-space:pre-wrap;color:var(--cyan);overflow-wrap:anywhere}
+.readout .hl{color:var(--amber)}
+.readout .g{color:var(--green)}
+.readout .r{color:var(--red)}
+canvas{display:block;max-width:100%}
+.eqbox{background:#06101f;border:1px solid var(--line);border-radius:12px;padding:6px 18px;margin:16px 0;overflow-x:auto;color:#e7edf9}
+mjx-container[display="true"]{overflow-x:auto;max-width:100%}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted);margin:2px 4px 2px 0}
+.foot{max-width:920px;margin:40px auto 0;color:var(--dim);font-size:13px;padding:0 56px}
+.pill{font-family:var(--mono);font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:3px 10px;color:var(--muted)}
+.hero-net{margin:34px 0 6px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);font-family:var(--mono);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* check-yourself recall cards */
+.recall{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px dashed var(--line);border-radius:var(--r);padding:18px 22px;margin:24px 0}
+.recall .q{font-weight:700;color:#fff;margin-bottom:10px}
+.recall .ans{display:none;color:var(--muted);margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.recall.open .ans{display:block}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== scroll-reveal ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .65s ease, transform .65s cubic-bezier(.2,.8,.3,1)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){.reveal{opacity:1 !important;transform:none !important;transition:none}}
+body{transition:background .35s ease,color .35s ease}
+
+/* ===== top controls ===== */
+.topctl{position:fixed;top:14px;right:18px;z-index:60;display:flex;gap:9px}
+.topbtn{font-family:var(--mono);font-size:12.5px;background:rgba(18,29,54,.82);border:1px solid var(--line);color:var(--ink);
+  padding:9px 14px;border-radius:30px;cursor:pointer;display:flex;align-items:center;gap:7px;backdrop-filter:blur(8px);transition:.18s}
+.topbtn:hover{border-color:var(--cyan);color:#fff}
+.topbtn.primary{background:linear-gradient(90deg,var(--violet),var(--cyan));color:#06241f;border:none;font-weight:700}
+.topbtn.primary:hover{color:#06241f;filter:brightness(1.08)}
+[data-theme="light"] .topbtn{background:rgba(255,255,255,.9);border-color:#dde4f0;color:#16223d}
+[data-theme="light"] .topbtn:hover{color:#0a4a57}
+
+/* ===== guided story mode ===== */
+.spot{position:fixed;z-index:71;border:2px solid var(--cyan);border-radius:16px;
+  box-shadow:0 0 0 9999px rgba(2,5,12,.66), 0 0 28px rgba(56,240,216,.55);
+  transition:all .5s cubic-bezier(.3,.9,.3,1);pointer-events:none}
+.storycard{position:fixed;z-index:73;left:50%;bottom:28px;transform:translateX(-50%);width:min(640px,92vw);
+  background:linear-gradient(180deg,#0f1b33,#0a1322);border:1px solid rgba(56,240,216,.42);border-radius:18px;padding:20px 24px;
+  box-shadow:0 22px 64px rgba(0,0,0,.55);color:#e7edf9;animation:popcard .35s cubic-bezier(.2,.9,.3,1)}
+@keyframes popcard{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+.storycard .stp{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan)}
+.storycard h3{margin:6px 0 6px;color:#fff;font-size:21px}
+.storycard p{color:#aebbd6;font-size:14.5px;margin:0;line-height:1.6}
+.storynav{display:flex;align-items:center;gap:8px;margin-top:16px}
+.storynav .sp{flex:1}
+.storynav .btn{padding:7px 12px}
+.storydots{display:flex;gap:5px;flex-wrap:wrap;max-width:260px}
+.storydots i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:.2s;cursor:pointer}
+.storydots i.on{background:var(--cyan);transform:scale(1.35)}
+
+/* ===== LIGHT THEME (page chrome only — interactive consoles stay dark) ===== */
+[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 600px at 82% -5%, rgba(25,196,255,.10), transparent 55%),
+    radial-gradient(1000px 500px at 0% 8%, rgba(155,140,255,.13), transparent 55%),
+    #eef2f8;
+  color:#16223d;
+}
+[data-theme="light"] h1,[data-theme="light"] h2{color:#0d1730}
+[data-theme="light"] h3{color:#16223d}
+[data-theme="light"] h4{color:#0a8198}
+[data-theme="light"] p{color:#28364f}
+[data-theme="light"] .lead{color:#46566f}
+[data-theme="light"] .muted{color:#586a8a}
+[data-theme="light"] strong{color:#0a1326}
+[data-theme="light"] .kicker{color:#0a8198}
+[data-theme="light"] .kicker::before{background:#0a8198}
+[data-theme="light"] a{color:#0a72b8}
+[data-theme="light"] section{border-bottom-color:#dde4f0}
+[data-theme="light"] section:nth-child(even){background:linear-gradient(180deg,rgba(13,23,48,.025),transparent)}
+[data-theme="light"] .card{background:linear-gradient(180deg,#ffffff,#f5f8fe);border-color:#dde4f0;box-shadow:0 1px 3px rgba(20,40,80,.05)}
+[data-theme="light"] .card h4{color:#0a8198}
+[data-theme="light"] .card .muted,[data-theme="light"] .card p{color:#43516e}
+[data-theme="light"] .note{background:rgba(124,108,255,.09);color:#3a3357}
+[data-theme="light"] .note b,[data-theme="light"] .note strong{color:#4b3bb0}
+[data-theme="light"] .key{background:rgba(214,158,46,.11)}
+[data-theme="light"] .key b{color:#946708}
+[data-theme="light"] .sidebar{background:linear-gradient(180deg,#ffffff,transparent);border-right-color:#dde4f0}
+[data-theme="light"] .brand{color:#0d1730}
+[data-theme="light"] .toc a{color:#46566f}
+[data-theme="light"] .toc a:hover{background:#eef2fb;color:#0d1730}
+[data-theme="light"] .toc a.active{background:linear-gradient(90deg,rgba(10,129,152,.14),transparent);color:#0a4a57;border-color:rgba(10,129,152,.4)}
+[data-theme="light"] .toc a.active .n{color:#0a8198}
+[data-theme="light"] .toc .grp{color:#8693b0}
+[data-theme="light"] table.tt th{background:#eef2f9;color:#46566f}
+[data-theme="light"] table.tt td{color:#16223d;border-color:#d8e0ee}
+[data-theme="light"] .foot{color:#7a89a8}
+[data-theme="light"] .tag{color:#43516e;border-color:#d2dcec}
+[data-theme="light"] .pill{color:#43516e;background:#eef2f9;border-color:#d8e0ee}
+[data-theme="light"] .legend{color:#586a8a}
+[data-theme="light"] .recall{background:linear-gradient(180deg,#ffffff,#f5f8fe);border-color:#c8d4e8}
+[data-theme="light"] .recall .q{color:#0d1730}
+[data-theme="light"] .recall .ans{color:#43516e;border-top-color:#dde4f0}
+[data-theme="light"] .lab h4{color:#38f0d8}
+[data-theme="light"] .lab p,[data-theme="light"] .lab .muted{color:#93a4c8}
+[data-theme="light"] .lab strong,[data-theme="light"] .lab b{color:#fff}
+</style>
+</head>
+<body>
+<script>(function(){try{var t=localStorage.getItem('lectheme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
+<div class="progress"><i id="progbar"></i></div>
+
+<div class="topctl">
+  <button class="topbtn primary" id="tourBtn">&#9654; Guided tour</button>
+  <button class="topbtn" id="themeBtn">&#9728; Light</button>
+</div>
+
+<div class="spot" id="storyspot" style="display:none"></div>
+<div class="storycard" id="storycard" style="display:none">
+  <div class="stp" id="storyStep"></div>
+  <h3 id="storyTitle"></h3>
+  <p id="storyText"></p>
+  <div class="storynav">
+    <div class="storydots" id="storyDots"></div>
+    <div class="sp"></div>
+    <button class="btn" id="storyPrev">&#9664; prev</button>
+    <button class="btn" id="storyPlay">&#9208; pause</button>
+    <button class="btn" id="storyNext">next &#9654;</button>
+    <button class="btn" id="storyExit">&#10005; exit</button>
+  </div>
+</div>
+
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="brand"><span class="dot"></span><img class="bits-logo" src="assets/bits-logo.png" alt="BITS Pilani logo" onerror="this.style.display='none'"><div>WILP, BITS Pilani<small>ZC416 &middot; Interactive Lecture.</small></div></div>
+  <nav class="toc" id="toc">
+    <div class="grp">Start here.</div>
+    <a href="#intro"><span class="n">00</span> Overview &amp; map</a>
+    <div class="grp">The problem.</div>
+    <a href="#fit"><span class="n">01</span> Fitting a Line = Optimization</a>
+    <a href="#valleys"><span class="n">02</span> Valleys &amp; Flat Spots</a>
+    <div class="grp">The algorithm.</div>
+    <a href="#gd"><span class="n">03</span> The Update Rule</a>
+    <a href="#bowl3d"><span class="n">04</span> The Loss Landscape in 3-D</a>
+    <a href="#stepsize"><span class="n">05</span> Choosing the Step Size</a>
+    <div class="grp">Smarter steps.</div>
+    <a href="#exact"><span class="n">06</span> The Exact Best Step</a>
+    <a href="#gradcheck"><span class="n">07</span> Gradient Checking</a>
+    <a href="#decay"><span class="n">08</span> Learning-Rate Decay</a>
+    <a href="#bold"><span class="n">09</span> The Bold Driver</a>
+    <div class="grp">Line search.</div>
+    <a href="#linesearch"><span class="n">10</span> Line Search &amp; the 90&deg; Rule</a>
+    <a href="#binary"><span class="n">11</span> Binary Search</a>
+    <a href="#golden"><span class="n">12</span> Golden-Section Search</a>
+    <a href="#cost"><span class="n">13</span> When Is It Worth It?</a>
+    <div class="grp">Scaling up.</div>
+    <a href="#sgd"><span class="n">14</span> Stochastic Gradient Descent</a>
+    <a href="#summary"><span class="n">15</span> Key Takeaways</a>
+  </nav>
+</aside>
+
+<main>
+
+<section id="intro">
+ <div class="wrap">
+  <div class="kicker">ZC416 &middot; Topic 9 &middot; Interactive Edition</div>
+  <h1>Gradient<br>Descent</h1>
+  <p class="bits-credit">Prepared for the <strong>Work Integrated Learning Programmes (WILP), BITS Pilani</strong>.</p>
+  <p class="lead">How does a machine <strong>learn</strong>? It measures how wrong it is, feels which way is downhill, and takes a small step. This page rebuilds the whole lecture around that one move. Every concept gets plain words first, then the exact math, then a lab you can <strong>drag, step, and break</strong>.</p>
+  <div class="hero-net">
+    <canvas id="heroCanvas" width="900" height="220" style="width:100%;height:auto"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--cyan)"></i> current point / step</span>
+      <span><i style="background:var(--amber)"></i> trail / key number</span>
+      <span><i style="background:var(--green)"></i> the minimum &middot; converged</span>
+      <span><i style="background:var(--red)"></i> diverges &middot; dropped</span>
+      <span><i style="background:var(--violet)"></i> direction / slope</span>
+    </div>
+  </div>
+  <div class="note"><b>Colour promise:</b> those five meanings never change. Cyan is always you. Green is always the goal. Red is always trouble.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; The whole lecture as one downhill path</h4>
+    <p class="muted" style="font-size:14px">Six stops, one story. <strong>Click any stop</strong> to jump straight to that part of the page.</p>
+    <canvas id="mapCanvas" width="880" height="300" style="width:100%;height:auto;cursor:pointer"></canvas>
+  </div>
+
+  <div class="grid3">
+    <div class="card"><h4>What you will learn</h4><p class="muted" style="font-size:14px">Why fitting a model is finding a valley. How the gradient-descent update works. How to pick, decay, or search the step size. And why sampling data (SGD) trains modern AI.</p></div>
+    <div class="card"><h4>How to use it</h4><p class="muted" style="font-size:14px">Read top to bottom, or jump via the sidebar. Every &#9889; panel is live. Try the <strong>&#9654; Guided tour</strong> (top right). Numbers in every console update as you drag.</p></div>
+    <div class="card"><h4>The running example</h4><p class="muted" style="font-size:14px">Four data points, one line \(y = ax + b\), one loss \(L(a,b)\). We meet them in Chapter 01 and train them with SGD in Chapter 14. One thread, start to finish.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="fit">
+ <div class="wrap">
+  <div class="kicker">01 &middot; The problem</div>
+  <h2>Fitting a Line = Optimization</h2>
+  <p class="lead">The lecture opens with a tiny table: \(x = 1,2,3,4\) and \(y = 3.1,\,4.9,\,7.3,\,9.1\). The easiest model of \(y\) is a straight line, \(y = ax + b\). Which \(a\) and \(b\) are best? To answer that, we first need a number that says how <em>bad</em> any guess is.</p>
+
+  <div class="note"><b>Analogy first.</b> Think of tuning an old radio with two dials to get the clearest signal. Each dial position produces some static. You listen, nudge a dial, and listen again. Fitting a model is exactly this: two dials (\(a\) and \(b\)), one static level (the loss).</div>
+
+  <h3>Step 1 &mdash; the miss, squared</h3>
+  <p>Write \(\hat y = ax + b\) for the model's prediction (the hat means "a guess"). For point \(i\), the miss is the gap \(y_i - \hat y_i\). Gaps can be positive or negative, and we do not want them cancelling. So we square each gap and add them up:</p>
+  <div class="eqbox">$$ L(a,b) \;=\; \sum_{i=1}^{4}\big(y_i - \hat y_i\big)^2 \;=\; \sum_{i=1}^{4}\big(y_i - (a x_i + b)\big)^2 $$</div>
+  <p>Here \(\sum\) (the Greek capital sigma) just means "add up over all four points". Small \(L\) means the line hugs the data. Finding the \((a,b)\) with the smallest \(L\) is an <strong>optimization problem</strong> &mdash; the whole lecture in one sentence.</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> Score the guess \((a,b) = (1,1)\), so \(\hat y = x+1\) gives predictions \(2, 3, 4, 5\).<br>
+  Gaps: \(1.1,\; 1.9,\; 3.3,\; 4.1\). Squares: \(1.21 + 3.61 + 10.89 + 16.81 = \textbf{32.52}\).<br>
+  Now score \((2,1)\): predictions \(3,5,7,9\); gaps \(0.1, -0.1, 0.3, 0.1\); loss \(0.01+0.01+0.09+0.01 = \textbf{0.12}\).<br>
+  The second line is about 271&times; better. The exact best pair (set both slopes of \(L\) to zero and solve) is \(a = \textbf{2.04},\; b = \textbf{1.00}\), with \(L = 0.072\).</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Drive the two dials, watch the loss</h4>
+    <p class="muted" style="font-size:14px">Drag \(a\) and \(b\). The amber gaps stretch and shrink, and the console recomputes the full loss, term by term. What to look for: <strong>no pair of dials beats (2.04, 1.00)</strong> &mdash; press the button and try to beat it by hand.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="fitSliders"></div>
+        <div class="chips">
+          <button class="btn" id="fitBest">&#9733; jump to best (2.04, 1.00)</button>
+          <button class="btn" id="fitBad">a random bad guess</button>
+        </div>
+        <div class="readout" id="fitOut"></div>
+      </div>
+      <div><canvas id="fitCanvas" width="440" height="360" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This <em>is</em> machine learning in miniature. The line is the model, \((a,b)\) are its <strong>parameters</strong>, and \(L\) is the training loss. Linear regression, logistic regression, and GPT-class networks all repeat this recipe. Only the model and the loss get bigger.</p>
+
+  <div class="key"><b>Pitfall.</b> \(L\) is a function of the <em>parameters</em> \((a,b)\), not of the data \(x\). The data are frozen into the landscape. And we square the gaps &mdash; raw gaps cancel in pairs, so a terrible line could score a perfect 0.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> So "best line" means "lowest point of \(L\)". Time to learn how to read a landscape: slopes, flat spots, valleys.</p>
+ </div>
+</section>
+
+<section id="valleys">
+ <div class="wrap">
+  <div class="kicker">02 &middot; The problem</div>
+  <h2>Valleys &amp; Flat Spots</h2>
+  <p class="lead">We seek the minimum of a differentiable function. The <strong>gradient</strong> tells us the direction of maximum increase, so we walk the other way &mdash; and we stop where the gradient dies. But a flat spot can be a valley, a hilltop, or a pass. How do we tell?</p>
+
+  <div class="note"><b>Analogy first.</b> You are on a hilly golf course in thick fog. The tilt under your shoes is the gradient: a direction (steepest uphill) and a strength (how steep). Walk against the tilt to descend. When the ground feels level, you have arrived &mdash; somewhere. The fog is the point: you never see the whole landscape, only the slope underfoot.</div>
+
+  <h3>Step 1 &mdash; stationary points</h3>
+  <p>For one variable, the gradient is the derivative \(\frac{dl}{dx}\): the slope. A point with slope zero is a <strong>stationary point</strong>. The slide's example is the quartic:</p>
+  <div class="eqbox">$$ l(x) = x^4 + 7x^3 + 5x^2 - 17x + 3, \qquad \frac{dl}{dx} = 4x^3 + 21x^2 + 10x - 17 $$</div>
+  <p>Setting the slope to zero is a cubic equation. So there are up to three such points &mdash; here, exactly three.</p>
+
+  <h3>Step 2 &mdash; the second-derivative test</h3>
+  <p>The <strong>second derivative</strong> \(\frac{d^2l}{dx^2} = 12x^2 + 42x + 10\) is the slope of the slope: the curvature. Positive means the ground bends up like a cup (a local <strong>minimum</strong>). Negative means it bends down like a dome (a local <strong>maximum</strong>).</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> The three roots of \(4x^3+21x^2+10x-17=0\) sit at \(x \approx -4.480,\; -1.432,\; 0.662\) (bracket each sign change, then bisect).<br>
+  Curvature at \(-4.480\): \(12(20.07) - 188.2 + 10 = \textbf{+62.7}\) &rarr; local <strong>min</strong>, \(l = -47.08\).<br>
+  Curvature at \(-1.432\): \(12(2.05) - 60.1 + 10 = \textbf{-25.5}\) &rarr; local <strong>max</strong>, \(l = 21.25\).<br>
+  Curvature at \(0.662\): \(12(0.44) + 27.8 + 10 = \textbf{+43.1}\) &rarr; local <strong>min</strong>, \(l = -3.84\).<br>
+  Two valleys, different depths: \(-47.08\) is the <strong>global</strong> minimum; \(-3.84\) is only <strong>local</strong>.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Walk the quartic &mdash; feel slope and curvature</h4>
+    <p class="muted" style="font-size:14px">Drag the point along the curve. The violet tangent is the slope; the console runs the second-derivative test live. Then press <strong>roll downhill</strong> from each start. What to look for: <strong>the two starts land in different valleys</strong> &mdash; where you begin decides what you find.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="quarticSliders"></div>
+        <div class="chips">
+          <button class="btn" id="qStartL">start at x = -6</button>
+          <button class="btn" id="qStartR">start at x = 2</button>
+          <button class="btn" id="qRoll">roll downhill &#9656;</button>
+          <button class="btn" id="qReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="quarticOut"></div>
+      </div>
+      <div><canvas id="quarticCanvas" width="440" height="360" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Deep-net losses look like this. Millions of dimensions, many valleys, different depths. Training finds <em>a</em> valley, not <em>the</em> valley. In many dimensions the curvature becomes a matrix (the <strong>Hessian</strong>), and flat spots can also be <strong>saddles</strong> &mdash; up one way, down another.</p>
+
+  <div class="key"><b>Pitfall.</b> "Gradient = 0" does not mean "minimum". Ask the curvature before celebrating. And a local minimum need not be the global one &mdash; you just proved it on the quartic.</div>
+
+  <div class="recall"><div class="q">Check yourself: the loss of Chapter 01 had one valley. The quartic has two. What single number told the two kinds of flat spot apart?</div>
+    <button class="btn" data-recall>Reveal answer</button>
+    <div class="ans">The second derivative (curvature). Positive at a flat spot &rarr; cup &rarr; local minimum; negative &rarr; dome &rarr; local maximum. On the quartic: +62.7, &minus;25.5, +43.1.</div>
+  </div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Solving "slope = 0" by algebra worked for a quartic. A million-knob model needs a method that only ever uses the local slope: gradient descent.</p>
+ </div>
+</section>
+
+<section id="gd">
+ <div class="wrap">
+  <div class="kicker">03 &middot; The algorithm</div>
+  <h2>The Update Rule</h2>
+  <p class="lead">Real models have millions of knobs and no closed-form answer. So we stop solving and start <strong>walking</strong>: from a start point, repeatedly step against the gradient. That loop is gradient descent, a <strong>first-order</strong> method &mdash; it uses slopes only, never curvatures.</p>
+
+  <h3>The rule, symbol by symbol</h3>
+  <div class="eqbox">$$ \boldsymbol{x}_{i+1} \;=\; \boldsymbol{x}_{i} \;-\; \gamma_i\,\big((\nabla f)(\boldsymbol{x}_i)\big)^{\!\top} $$</div>
+  <p>\(\boldsymbol{x}_i\) is the position after \(i\) steps. \(\nabla f\) (say "grad f") is the gradient: all partial slopes in one vector. \(\gamma_i\) (gamma) is the <strong>step size</strong> &mdash; ML calls it the <strong>learning rate</strong>. The \(\top\) transposes the lecture's row-vector gradient into a column. The minus sign is the whole trick: the gradient points uphill, so subtracting it walks downhill. For a small enough \(\gamma\), each step is safe: \(f(\boldsymbol{x}_0) \ge f(\boldsymbol{x}_1) \ge f(\boldsymbol{x}_2) \ge \dots\), a falling staircase into a local minimum.</p>
+
+  <h3>The slide's example, live</h3>
+  <p>The slides run this on \(f = \tfrac12 \boldsymbol{x}^{\top}\! A \boldsymbol{x} + \boldsymbol{b}^{\top}\boldsymbol{x}\) with \(A = \begin{bmatrix}2&1\\1&20\end{bmatrix}\), \(\boldsymbol{b} = \begin{bmatrix}-5\\-3\end{bmatrix}\) (code: <code>grad_descent1.m</code>). Multiplied out: \(f = x_1^2 + x_1x_2 + 10x_2^2 - 5x_1 - 3x_2\), with gradient \(\nabla f = (2x_1{+}x_2{-}5,\; x_1{+}20x_2{-}3)\).</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> The floor is where \(A\boldsymbol{x} = -\boldsymbol{b}\): substitute \(x_2 = 5-2x_1\) into \(x_1 + 20x_2 = 3\) to get \(-39x_1 = -97\), so \(x_1 = \textbf{2.4872},\; x_2 = \textbf{0.0256}\), where \(f = -6.2564\).<br>
+  Now walk there from \(\boldsymbol{x}_0 = (-3,-1)\) with \(\gamma = 0.085\). Gradient: \((2(-3)-1-5,\; -3-20-3) = (-12, -26)\).<br>
+  Step: \(\boldsymbol{x}_1 = (-3,-1) - 0.085\,(-12,-26) = (\textbf{-1.98},\, \textbf{1.21})\); loss falls \(40 \to 22.44\).<br>
+  Again: gradient \((-7.75, 19.22)\), so \(\boldsymbol{x}_2 = (\textbf{-1.3213},\, \textbf{-0.4237})\); loss \(\to 11.98\). The staircase is falling.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Walk the narrow bowl</h4>
+    <p class="muted" style="font-size:14px">Press <strong>step</strong> and watch the exact arithmetic in the console. What to look for: the bowl is 10&times; steeper in \(x_2\) (the 20 in \(A\)). So the path <strong>zig-zags across the valley</strong> while crawling along it. Then push \(\gamma\) past <strong>0.0997</strong> &mdash; the largest curvature snaps the walk apart.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="gdSliders"></div>
+        <div class="chips">
+          <button class="btn" id="gdStep">step &#9656;</button>
+          <button class="btn" id="gdRun">run &times;25</button>
+          <button class="btn" id="gdReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="gdOut"></div>
+      </div>
+      <div><canvas id="gdCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This loop <em>is</em> the training loop. Backpropagation computes \(\nabla f\) for every weight at once; the optimiser applies exactly this update. First-order only is why it scales: slopes for a billion weights are affordable, curvatures are not.</p>
+
+  <div class="key"><b>Pitfall.</b> The guarantee is doubly local: the step must be small enough. And the destination is only <em>a</em> local minimum &mdash; whichever valley your start drains into.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Two knobs still means a 2-D map. Real losses are surfaces. Let's look at one properly &mdash; in 3-D.</p>
+ </div>
+</section>
+
+<section id="bowl3d">
+ <div class="wrap">
+  <div class="kicker">04 &middot; The algorithm</div>
+  <h2>The Loss Landscape in 3-D</h2>
+  <p class="lead">With two weights the loss is a <strong>surface</strong>: height = loss. Gradient descent is a ball rolling on it. And the lecture's warning &mdash; "converges to some <em>local</em> minimum" &mdash; becomes visible. A bumpy landscape has more than one resting place.</p>
+
+  <div class="note"><b>Analogy first.</b> A convex bowl is a kitchen sink: wherever you release the ball, it finds the one drain. A non-convex landscape is an egg carton: two dips, and the ridge between them decides which dip catches your ball.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Roll the ball &mdash; then make the landscape bumpy</h4>
+    <p class="muted" style="font-size:14px"><strong>Drag the surface to rotate it</strong> (plain canvas, no 3-D library). In <strong>convex bowl</strong> mode both presets reach the same green drain. Switch to <strong>two valleys</strong>: presets A and B start almost side by side, yet land in <strong>different minima</strong>. That is why initialisation matters.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn active" id="surfConvex">convex bowl</button>
+          <button class="btn" id="surfBumpy">two valleys</button>
+        </div>
+        <div class="chips">
+          <button class="btn" id="surfA">preset A</button>
+          <button class="btn" id="surfB">preset B</button>
+          <button class="btn" id="surfStep">step &#9656;</button>
+          <button class="btn" id="surfRun">run &times;30</button>
+          <button class="btn" id="surfReset">&#8634; reset</button>
+        </div>
+        <div id="surfSliders"></div>
+        <div class="readout" id="surfOut"></div>
+      </div>
+      <div><canvas id="surfCanvas" width="440" height="380" style="width:100%;height:auto;touch-action:none;cursor:grab"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Real losses are bumpy. Deep nets are wildly non-convex, yet SGD-trained nets work. Part of the story: in very high dimension most bad "flat spots" are saddles, not deep traps. The two-valley toy is the smallest honest picture of that world.</p>
+
+  <div class="key"><b>Pitfall.</b> Convexity is a gift, not a given. Linear regression's bowl (Chapter 01) has one drain; a neural net's landscape does not. Never assume the valley you found is the deepest one.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Every run so far quietly depended on one number: \(\gamma\). Time to stress-test it.</p>
+ </div>
+</section>
+
+<section id="stepsize">
+ <div class="wrap">
+  <div class="kicker">05 &middot; The algorithm</div>
+  <h2>Choosing the Step Size</h2>
+  <p class="lead">The slide's dilemma. Too small a step size, and gradient descent is painfully slow. Too large, and it overshoots, fails to converge, or diverges outright. The gradient promises nothing beyond your toes &mdash; \(\gamma\) is how far you leap on that promise.</p>
+
+  <div class="note"><b>Analogy first.</b> Walking downstairs in the dark: shuffle one toe-length at a time and take all night. Or jump three steps and crack your shin on the far wall. The stairs did not change. Your stride did.</div>
+
+  <h3>The three fates, computed</h3>
+  <p>On \(f(x) = x^2\) the update collapses to one multiplication: \(x \leftarrow x - \gamma(2x) = (1-2\gamma)x\). The factor \((1-2\gamma)\) decides everything:</p>
+  <div class="twrap"><table class="tt">
+    <tr><th>&gamma;</th><th>factor 1&minus;2&gamma;</th><th>iterates from 4</th><th>fate</th></tr>
+    <tr><td>0.05</td><td>0.9</td><td>4 &rarr; 3.6 &rarr; 3.24 &rarr; 2.916&hellip;</td><td class="zero">crawls</td></tr>
+    <tr><td>0.45</td><td>0.1</td><td>4 &rarr; 0.4 &rarr; 0.04 &rarr; 0.004</td><td class="one">glides</td></tr>
+    <tr><td>1.05</td><td>&minus;1.1</td><td>4 &rarr; &minus;4.4 &rarr; 4.84 &rarr; &minus;5.32&hellip;</td><td style="color:var(--red)">explodes</td></tr>
+  </table></div>
+  <p>Shrinking needs \(|1-2\gamma| < 1\), which solves to \(0 < \gamma < 1\). At exactly \(\gamma = 1\) the ball bounces between \(\pm 4\) forever.</p>
+
+  <h3>The slide's fix: undo and halve</h3>
+  <p>Make \(\gamma\) adaptive. Try a step. Loss went <em>up</em>? You were too aggressive: <strong>undo the step and halve \(\gamma\)</strong>. Loss went <em>down</em>? Keep it, and let the next step be a bit larger. The recorded loss then never rises &mdash; that is the slide's "guarantees monotonic convergence".</p>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Find the divergence edge &mdash; then let it heal itself</h4>
+    <p class="muted" style="font-size:14px">Slide \(\gamma\) and step. What to look for: below 1 the ball settles; above 1 each bounce <strong>grows</strong>. Then set \(\gamma = 1.2\), switch on <strong>undo-and-halve</strong>, and watch the console reject the bad step, halve \(\gamma\), and glide home.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="ssSliders"></div>
+        <div class="chips">
+          <button class="btn" id="ssAdapt">undo &amp; halve: OFF</button>
+          <button class="btn" id="ssStep">step &#9656;</button>
+          <button class="btn" id="ssRun">run &times;12</button>
+          <button class="btn" id="ssReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="ssOut"></div>
+      </div>
+      <div><canvas id="ssCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This is deep learning's most-tuned knob. Divergence even has a famous signature: the loss becomes <code>NaN</code>. Undo-and-halve lives on inside "reduce LR on plateau" schedulers and gradient-clipping safety nets.</p>
+
+  <div class="key"><b>Pitfall.</b> "Monotonic" is not "fast". Halve too eagerly and \(\gamma\) shrinks to nothing &mdash; the run stalls politely. And a \(\gamma\) that is safe on one slope can be reckless on a steeper one.</div>
+
+  <div class="recall"><div class="q">Check yourself: on \(f(x)=x^2\), why does \(\gamma = 0.5\) reach the minimum in exactly one step?</div>
+    <button class="btn" data-recall>Reveal answer</button>
+    <div class="ans">The update multiplies \(x\) by \((1-2\gamma)\). At \(\gamma=0.5\) that factor is 0, so any start maps straight to \(x=0\) &mdash; the minimum &mdash; in one hop.</div>
+  </div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Guess-and-check is one answer. For a quadratic bowl there is a better one: calculus can hand us the <em>perfect</em> step.</p>
+ </div>
+</section>
+
+<section id="exact">
+ <div class="wrap">
+  <div class="kicker">06 &middot; Smarter steps</div>
+  <h2>The Exact Best Step</h2>
+  <p class="lead">Freeze the direction, and the loss along it becomes a one-variable function of \(\gamma\). One variable means calculus can minimise it exactly. The slide does this for \(f(x,y) = x^2 + 3y^2\) from \((2,2)\) &mdash; code: <code>grad_descent2.m</code>.</p>
+
+  <h3>Build \(h(\gamma)\), then differentiate</h3>
+  <p>The gradient is \(\nabla f = [2x,\, 6y]\), so one step moves \(x \to (1-2\gamma)x\) and \(y \to (1-6\gamma)y\). Substitute into \(f\):</p>
+  <div class="eqbox">$$ h(\gamma) = (1-2\gamma)^2 x^2 + 3\,(1-6\gamma)^2 y^2, \qquad h'(\gamma) = -4(1-2\gamma)x^2 - 36(1-6\gamma)y^2 $$</div>
+  <p>Set \(h'(\gamma) = 0\), expand, and collect \(\gamma\):</p>
+  <div class="eqbox">$$ \gamma \;=\; \frac{x^2 + 9y^2}{2x^2 + 54y^2} $$</div>
+  <p>The perfect step, recomputed fresh at every point.</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> At \((2,2)\): \(x^2 = y^2 = 4\), so \(\gamma = \frac{4+36}{8+216} = \frac{40}{224} = \frac{5}{28} \approx \textbf{0.1786}\).<br>
+  Move: \(x_1 = 0.6429 \times 2 = \textbf{1.2857}\), \(y_1 = -0.0714 \times 2 = \textbf{-0.1429}\). Loss: \(16 \to \textbf{1.7143}\) &mdash; one step erased 89%.<br>
+  Next point: \(\gamma = \frac{1.6531 + 0.1837}{3.3061 + 1.1020} = \frac{5}{12} \approx \textbf{0.4167}\), landing at \((0.2143,\, 0.2143)\), loss \(\textbf{0.1837}\). The two step sizes then alternate: \(\tfrac{5}{28}, \tfrac{5}{12}, \tfrac{5}{28}, \dots\).</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Take perfect steps &mdash; and catch the 90&deg; secret</h4>
+    <p class="muted" style="font-size:14px">Each press computes \(\gamma\) from the formula and takes the best possible step. What to look for: the console checks (new gradient) &middot; (old direction) after every move &mdash; it is <strong>always zero</strong>. Perfect steps land exactly where the new downhill is sideways, so the path staircases at right angles.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn" id="exStep">perfect step &#9656;</button>
+          <button class="btn" id="exRun">run &times;6</button>
+          <button class="btn" id="exReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="exOut" style="min-height:170px"></div>
+      </div>
+      <div><canvas id="exCanvas" width="440" height="380" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This "bead on a wire" trick seeds every line search. It also powers the learning-rate finders in modern libraries, which probe a range of \(\gamma\) before training. The slide's caution stands: finding the step can be expensive &mdash; Chapters 10&ndash;13 price that trade.</p>
+
+  <div class="key"><b>Pitfall.</b> The tidy formula exists because \(f\) is quadratic. For a general loss every probe of \(h(\gamma)\) costs a full model evaluation.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> One question before trusting any of this on your own model. Is your gradient code even right?</p>
+ </div>
+</section>
+
+<section id="gradcheck">
+ <div class="wrap">
+  <div class="kicker">07 &middot; Smarter steps</div>
+  <h2>Gradient Checking</h2>
+  <p class="lead">Gradient descent trusts the gradient completely. If your derivative code has a bug, the walk marches confidently the wrong way. The slide's safety net: compare your formula against a purely numerical estimate that needs no calculus at all.</p>
+
+  <div class="note"><b>Analogy first.</b> To check a car's speedometer you do not open the engine. You time yourself between two mile markers and divide distance by time. Finite differences are the mile-marker test for your gradient code.</div>
+
+  <h3>The finite-difference formula</h3>
+  <p>Let \(J(\boldsymbol{w}) = J(w_1, \dots, w_d)\). Pick one parameter \(w_i\), nudge it by a small \(\Delta\) (capital delta), and leave the rest alone:</p>
+  <div class="eqbox">$$ \frac{\partial J}{\partial w_i} \;\approx\; \frac{J(w_1,\dots,w_i + \Delta,\dots,w_d) \;-\; J(w_1,\dots,w_i,\dots,w_d)}{\Delta} $$</div>
+  <p>Top: how much \(J\) rose. Bottom: how far we pushed. Because two evaluations per parameter is slow, the slide says to <strong>sample a few</strong> parameters and spot-check those, not all \(d\).</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> Take \(J(w_1,w_2) = w_1^2 + 3w_1w_2\) at \((1,2)\). Calculus claims \(\partial J/\partial w_1 = 2w_1 + 3w_2 = \textbf{8}\).<br>
+  Check: \(J(1,2) = 7\) and \(J(1.01,\,2) = 1.0201 + 6.06 = 7.0801\). Estimate: \((7.0801-7)/0.01 = \textbf{8.0100}\).<br>
+  The 0.01 mismatch is the method, not a bug: the one-sided probe picks up half the curvature times \(\Delta\), here \(\tfrac12(2)(0.01) = 0.01\). For \(w_2\): claim \(3w_1 = 3\); estimate \((7.03-7)/0.01 = \textbf{3.0000}\), exact, because \(J\) is straight in \(w_2\).</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Shrink &Delta; and watch the secant become the tangent</h4>
+    <p class="muted" style="font-size:14px">The amber secant joins \(w\) and \(w+\Delta\) on the slice \(J(w_1, 2)\). Drag \(\Delta\) toward zero: the secant rotates onto the violet tangent, and the error tracks \(\Delta\) exactly. Then toggle the <strong>central difference</strong> &mdash; the curvature term cancels and the error collapses.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="fdSliders"></div>
+        <div class="chips"><button class="btn" id="fdCentral">central difference: OFF</button></div>
+        <div class="readout" id="fdOut"></div>
+      </div>
+      <div><canvas id="fdCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This is <strong>gradient checking</strong>, the classic unit test for hand-written backpropagation. Frameworks automate it (<code>torch.autograd.gradcheck</code>), comparing autograd against finite differences on a few sampled coordinates &mdash; exactly the slide's advice.</p>
+
+  <div class="key"><b>Pitfall.</b> \(\Delta\) is a compromise. Too large: curvature pollutes the estimate. Too small: floating-point subtraction destroys the numerator. Around \(10^{-5}\) works well; central differences buy an extra order of accuracy.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Gradient verified. Back to the rate itself: what if it should not be one constant at all, but a number that shrinks over time?</p>
+ </div>
+</section>
+
+<section id="decay">
+ <div class="wrap">
+  <div class="kicker">08 &middot; Smarter steps</div>
+  <h2>Learning-Rate Decay</h2>
+  <p class="lead">A large constant rate races close to the optimum &mdash; then <strong>oscillates around it forever</strong>. Each step leaps across the minimum to the far side. A small constant takes a very long time to arrive. The slides' answer: start large, shrink with time.</p>
+
+  <div class="note"><b>Analogy first.</b> Parking a car: cover the lot at speed, brake near the bay, inch the last half-metre. Highway speed the whole way overshoots forever; parking speed the whole way never arrives.</div>
+
+  <h3>The schedules</h3>
+  <p>With a time-dependent rate the update is \(\boldsymbol{w}_{n+1} = \boldsymbol{w}_n - \alpha_t \nabla J\). Here \(t\) counts <strong>epochs</strong>: full cycles over the training data. So the rate stays constant within one cycle. The two most common decay functions, plus the staircase:</p>
+  <div class="eqbox">$$ \text{exponential: } \alpha_t = \alpha_0\, e^{-kt} \qquad \text{inverse: } \alpha_t = \frac{\alpha_0}{1+kt} \qquad \text{step: cut by a fixed factor every few epochs} $$</div>
+  <p>\(\alpha_0\) is the starting rate; \(k\) controls how fast the shrinking happens.</p>
+
+  <div class="key"><b>Worked example, real numbers.</b> \(\alpha_0 = 0.5\), \(k = 0.5\).<br>
+  Exponential: \(\alpha_1 = 0.5e^{-0.5} = 0.5 \times 0.6065 = \textbf{0.3033}\); then \(0.1839,\; 0.1116,\; 0.0677\).<br>
+  Inverse: \(\alpha_1 = 0.5/1.5 = \textbf{0.3333}\); then \(0.25,\; 0.20,\; 0.1667\).<br>
+  By epoch 4 the exponential rate has lost 86% of its size, the inverse only 67%: exponential brakes hard, inverse keeps a long tail.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Same start, four rate policies &mdash; who lands?</h4>
+    <p class="muted" style="font-size:14px">Left: the schedule \(\alpha_t\). Right: a descent on \(f(x)=x^2\) from \(x=4\) using it. What to look for: <strong>constant-large orbits the minimum forever</strong> &mdash; watch the endless zig-zag. Every decay schedule spends its boldness early and then settles. Raise \(k\) too far and the run stalls short &mdash; the other failure.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn active" id="dkConst">constant</button>
+          <button class="btn" id="dkExp">exponential</button>
+          <button class="btn" id="dkInv">inverse</button>
+          <button class="btn" id="dkStep">step decay</button>
+        </div>
+        <div id="dkSliders"></div>
+        <div class="chips">
+          <button class="btn" id="dkGo">run 30 epochs</button>
+          <button class="btn" id="dkReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="dkOut"></div>
+      </div>
+      <div><canvas id="dkCanvas" width="440" height="380" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Every serious training run schedules its rate. Step decay trained the classic ResNets. Exponential and inverse decay are one-liners in every framework. Modern recipes add warm-up and cosine shapes. The reason is exactly the slide's: constant-large dances, constant-small crawls.</p>
+
+  <div class="key"><b>Pitfall.</b> Decay that is too aggressive freezes the run far from the valley. And \(\alpha_0\) still matters &mdash; no schedule rescues a divergent first epoch.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Schedules shrink the rate blindly, on a timer. The bold driver listens instead.</p>
+ </div>
+</section>
+
+<section id="bold">
+ <div class="wrap">
+  <div class="kicker">09 &middot; Smarter steps</div>
+  <h2>The Bold Driver</h2>
+  <p class="lead">Adjust the learning rate by <strong>results</strong>, every iteration. Improving? Grow the rate about <strong>5%</strong> per step. Worsened? <strong>Undo the step</strong>, cut the rate by <strong>50%</strong>, and take a fresh step. Continue to convergence.</p>
+
+  <div class="note"><b>Analogy first.</b> Drive bolder while the road rewards you. The moment you clip a kerb, back up and drive at half speed. Improvement earns boldness; a crash costs half of it.</div>
+
+  <div class="key"><b>Worked example, real numbers</b> (\(f = x^2\), \(x_0 = 4\), \(\alpha_0 = 0.9\)).<br>
+  It 1: try \(4 - 0.9(8) = -3.2\); \(f: 16 \to 10.24\), better &rarr; keep, \(\alpha = 0.945\).<br>
+  It 2: try \(2.848\); \(f \to 8.111\), better &rarr; \(\alpha = 0.992\).<br>
+  It 3: try \(-2.804\); \(f \to 7.862\), barely better &rarr; \(\alpha = 1.042\).<br>
+  It 4: try \(3.039\); \(f \to 9.233\), <strong>worse</strong> &rarr; <strong>undo</strong>, \(\alpha = 0.521\).<br>
+  It 5: fresh try \(0.117\); \(f \to \textbf{0.0138}\) &mdash; a spectacular recovery. It 6: \(f \to 0.0001\). Done.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Step through the run &mdash; watch it crash and recover</h4>
+    <p class="muted" style="font-size:14px">Top strip: the kept loss. Bottom strip: the rate creeping up 5% per win. What to look for: <strong>iteration 4</strong>. Three greedy raises push \(\alpha\) past this bowl's safe ceiling of 1. The crash is caught (red). The halved rate then lands almost at the minimum in one hop.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn" id="bdStep">iterate &#9656;</button>
+          <button class="btn" id="bdAuto">auto &#9654;</button>
+          <button class="btn" id="bdReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="bdOut" style="min-height:150px"></div>
+      </div>
+      <div><canvas id="bdCanvas" width="440" height="380" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Bold driver has many descendants. "Reduce LR on plateau" schedulers share its reflex. So do trust-ratio methods and per-weight adapters like Adagrad and Adam: listen to progress, resize the step. One caveat from the slide: mini-batch loss readings are <strong>noisy</strong>, so judge improvement over \(m\) steps, not one.</p>
+
+  <div class="key"><b>Pitfall.</b> On noisy losses, raw bold driver halves on unlucky batches and grows on lucky ones. Use the \(m\)-step verdict, and cap how big \(\alpha\) may grow.</div>
+
+  <div class="recall"><div class="q">Check yourself: bold driver grows the rate 5% per win but halves it on a loss. Why is the punishment so much bigger than the reward?</div>
+    <button class="btn" data-recall>Reveal answer</button>
+    <div class="ans">Divergence compounds: each too-big step lands farther out, so one bad rate can undo many good steps. Growing gently probes the ceiling; halving hard retreats below it immediately. (Compare: 15 wins of +5% roughly double the rate; one halving undoes all 15.)</div>
+  </div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Undo-and-halve and bold driver are clever guessing. The principled tool &mdash; searching the step directly &mdash; is line search.</p>
+ </div>
+</section>
+
+<section id="linesearch">
+ <div class="wrap">
+  <div class="kicker">10 &middot; Line search</div>
+  <h2>Line Search &amp; the 90&deg; Rule</h2>
+  <p class="lead">Pick the direction first; then <strong>search</strong> that line for the truly best step. Expensive &mdash; rarely used in vanilla gradient descent &mdash; but vital in some specialised methods, and full of geometry.</p>
+
+  <h3>Setup and names</h3>
+  <p>Let \(J(\boldsymbol{w})\) be the objective and \(\boldsymbol{w}_t\) the parameters at step \(t\). The descent direction is \(\boldsymbol{g}_t\); in <strong>steepest descent</strong> it is \(-\nabla J(\boldsymbol{w}_t)\). The update and the search:</p>
+  <div class="eqbox">$$ \boldsymbol{w}_{t+1} = \boldsymbol{w}_t + \alpha_t\,\boldsymbol{g}_t, \qquad \alpha_t = \arg\min_{\alpha}\, J(\boldsymbol{w}_t + \alpha\,\boldsymbol{g}_t) $$</div>
+
+  <h3>The perpendicular property, proved gently</h3>
+  <p>Claim: at the perfect \(\alpha_t\), the new gradient \(\nabla J(\boldsymbol{w}_{t+1})\) is <strong>perpendicular</strong> to \(\boldsymbol{g}_t\). Why: suppose their dot product were not zero. A tiny extra move \(\pm\delta\,\boldsymbol{g}_t\) along the same line changes \(J\) by about (Taylor's first-order rule):</p>
+  <div class="eqbox">$$ J(\boldsymbol{w}_t + \alpha_t\boldsymbol{g}_t \pm \delta\,\boldsymbol{g}_t) \;\approx\; J(\boldsymbol{w}_t + \alpha_t\boldsymbol{g}_t) \;\pm\; \delta\, \boldsymbol{g}_t^{\top} \nabla J(\boldsymbol{w}_t + \alpha_t\boldsymbol{g}_t) $$</div>
+  <p>Positive dot product? Choose the minus sign. Negative? The plus. Either way \(J\) drops &mdash; contradicting "\(\alpha_t\) was the minimum". So the dot product must be zero. You verified this numerically in Chapter 06: \((-4)(2.5714) + (-12)(-0.8571) = 0\), exactly.</p>
+
+  <h3>Bracketing the dip</h3>
+  <p>How to actually minimise over \(\alpha\)? In typical settings \(J\) along the line is <strong>unimodal</strong> in \(\alpha\). It falls, bottoms out once, rises &mdash; no second dip. That holds especially under quadratic or convex approximations. So first trap the dip in a bracket \([0, \alpha_{\max}]\): evaluate at geometrically growing \(\alpha\) until the value rises. Then narrow the bracket. <strong>Binary search</strong> and <strong>golden-section search</strong> are exact and need unimodality. The <strong>Armijo rule</strong> is inexact, needs no unimodality, and applies more broadly.</p>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Scrub the 1-D curve, then sweep to bracket it</h4>
+    <p class="muted" style="font-size:14px">This is \(h(\alpha)\) for the first step from \((2,2)\) on \(x^2+3y^2\). <strong>Hover to scrub</strong>: read the loss any step size would give. Then press <strong>sweep</strong>: probes at 0.001, 0.01, 0.1, 0.5 fall, fall, fall, rise. So the dip is trapped in [0, 0.5] before we ever "solve" anything.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn" id="lsSweep">sweep &alpha; geometrically</button>
+          <button class="btn" id="lsReset">&#8634; clear</button>
+        </div>
+        <div class="readout" id="lsOut"></div>
+      </div>
+      <div><canvas id="lsCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>This is the classical base case. Its right-angle staircase motivates conjugate-gradient methods, which bend the next direction to stop the zig-zag. Newton-type methods lean on line searches too.</p>
+
+  <div class="key"><b>Pitfall.</b> The 90&deg; rule holds only at the <em>exact</em> line minimum &mdash; stop early and it fails. And without unimodality, bracket methods can zoom confidently onto the wrong dip.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Bracket in hand, two exact narrowing tools. First: read one slope and throw away half.</p>
+ </div>
+</section>
+
+<section id="binary">
+ <div class="wrap">
+  <div class="kicker">11 &middot; Line search</div>
+  <h2>Binary Search</h2>
+  <p class="lead">Hold a bracket \([a,b] = [0, \alpha_{\max}]\) containing the single dip. Ask one question at the midpoint: <strong>rising or falling here?</strong> Rising &rarr; the dip is behind (left). Falling &rarr; ahead (right). Either way, half the bracket dies.</p>
+
+  <div class="note"><b>Analogy first.</b> Finding a word in a paper dictionary: open to the middle, check one thing &mdash; past it or before it? &mdash; and ignore half the book. Here "alphabetical order" becomes "which way the curve tilts".</div>
+
+  <h3>Reading the tilt without a formula</h3>
+  <p>The slide's trick: evaluate at two squeezed-together points. Use the midpoint \(\frac{a+b}{2}\) and its neighbour \(\frac{a+b+\epsilon}{2}\), with \(\epsilon\) tiny (about \(10^{-6}\)). Second value larger &rarr; increasing &rarr; keep \(\big[a, \frac{a+b+\epsilon}{2}\big]\). Otherwise keep \(\big[\frac{a+b}{2}, b\big]\). Repeat.</p>
+
+  <div class="key"><b>Worked example, real numbers</b> (on \(h(\gamma)\) from Chapter 06, bracket [0, 0.5], true dip at 0.1786).<br>
+  Round 1: mid 0.25, \(h = 4.0\), rising &rarr; <strong>[0, 0.25]</strong>.<br>
+  Round 2: mid 0.125, \(h = 3.0\), falling &rarr; <strong>[0.125, 0.25]</strong>.<br>
+  Round 3: mid 0.1875, \(h = 1.75\), rising &rarr; <strong>[0.125, 0.1875]</strong>.<br>
+  Round 4: mid 0.15625, \(h = 1.9375\), falling &rarr; <strong>[0.15625, 0.1875]</strong>.<br>
+  Width: 0.5 &rarr; 0.03125, a factor of \(2^4 = 16\), and the dip never escaped. Cost: two evaluations per round.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Probe the midpoint, kill half the bracket</h4>
+    <p class="muted" style="font-size:14px">Press <strong>probe</strong> repeatedly. The dropped half turns red; the surviving bracket tightens around the amber dip. What to look for: the width halves every round &mdash; precision doubles at linear cost.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn" id="bsProbe">probe midpoint &#9656;</button>
+          <button class="btn" id="bsReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="bsOut" style="min-height:140px"></div>
+      </div>
+      <div><canvas id="bsCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Interval halving on a 1-D response is everywhere. Learning-rate range probes reuse the loop. So do threshold tuning and bisection on regularisation strength. Same loop, different curve.</p>
+
+  <div class="key"><b>Pitfall.</b> \(\epsilon\) must beat floating-point noise or the rising/falling verdict becomes a coin flip. And unimodality is load-bearing: with two dips, a discarded half can contain the better one.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> Binary search reads slopes. The next tool never does &mdash; it only compares values.</p>
+ </div>
+</section>
+
+<section id="golden">
+ <div class="wrap">
+  <div class="kicker">12 &middot; Line search</div>
+  <h2>Golden-Section Search</h2>
+  <p class="lead">Keep two interior sample points \(m_1 &lt; m_2\) inside \([a,b]\) and evaluate all four positions. Then <strong>drop the stretch that provably cannot hold the minimum</strong>. No derivatives, no probes &mdash; just comparisons.</p>
+
+  <div class="note"><b>Analogy first.</b> Four scouts report their altitude. On a one-dip valley, the lowest scout cannot be separated from the dip by a higher scout. Whatever lies beyond a higher neighbour is doomed territory &mdash; cut it off the map.</div>
+
+  <h3>The dropping rules (from the slide)</h3>
+  <ul class="muted">
+    <li>smallest value at \(a\): drop \((m_1, b]\).</li>
+    <li>smallest value at \(b\): drop \([a, m_2)\).</li>
+    <li>smallest value at \(m_1\): drop \((m_2, b]\).</li>
+    <li>smallest value at \(m_2\): drop \([a, m_1)\).</li>
+  </ul>
+  <p>Sometimes both end pieces go at once. Then re-seed. Survivor holds <em>no</em> evaluated point? Pick a random \(p\) inside, and a \(q\) in the larger piece \(p\) creates. Holds exactly <em>one</em> point \(p\)? Add \(q\) in the larger of \([a,p]\) and \([p,b]\). Four points again; repeat to the accuracy you need.</p>
+
+  <div class="key"><b>Worked example, real numbers</b> (same \(h\), bracket [0, 0.5], thirds as mid-samples).<br>
+  Values: \(h(0)=16\), \(h(1/6)=\textbf{1.778}\) (the \(12(1-6\gamma)^2\) term dies at \(\gamma = 1/6\)), \(h(1/3)=12.444\), \(h(0.5)=48\).<br>
+  Smallest at \(m_1\) &rarr; drop \((m_2, b]\) &rarr; survivor <strong>[0, 1/3]</strong> holding \(p = 1/6\).<br>
+  Re-seed \(q = 0.25\) (\(h = 4\)). New four: 0, 1/6, 0.25, 1/3. Smallest at 1/6 &rarr; drop \((0.25, 1/3]\) &rarr; <strong>[0, 0.25]</strong>. The dip (0.1786) survived both cuts, as the rules guarantee.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Apply the drop rule, round by round</h4>
+    <p class="muted" style="font-size:14px">Each press evaluates the four points and names the smallest. It shades the doomed piece red, then re-seeds. What to look for: the console cites <strong>which rule fired</strong> each round &mdash; value comparisons alone corner the minimum.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn" id="gsRound">apply drop rule &#9656;</button>
+          <button class="btn" id="gsReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="gsOut" style="min-height:150px"></div>
+      </div>
+      <div><canvas id="gsCanvas" width="440" height="340" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Why "golden"? Space the interior points a fraction \((\sqrt{5}-1)/2 \approx 0.618\) of the width from each end. Then every cut leaves one old point exactly where the next round needs it. Cost: one new evaluation per round, versus binary search's two. Golden-section and its parabolic cousin, Brent's method, power <code>minimize_scalar</code> in scientific Python.</p>
+
+  <div class="key"><b>Pitfall.</b> The drop rules are proofs only under unimodality. Feed in a two-dip curve and the method politely discards the better dip.</div>
+
+  <p class="muted"><b>Bridge &rarr;</b> We now own precise, pricey tools. The engineering question: when do they pay?</p>
+ </div>
+</section>
+
+<section id="cost">
+ <div class="wrap">
+  <div class="kicker">13 &middot; Line search</div>
+  <h2>When Is It Worth It?</h2>
+  <p class="lead">Line search provably converges to a local optimum &mdash; but each step costs many evaluations. That is why vanilla gradient descent rarely uses it. Newton's method has no choice: it needs exact line search. The everyday compromise is <strong>Armijo's rule</strong>. Try a step. If the drop is not at least a set fraction of what the slope promised, shrink and retry.</p>
+
+  <div class="note"><b>Analogy first.</b> Crossing a city, you can study the map at every corner: slow corners, few wrong turns. Or stride on instinct: instant corners, several wrong turns. The fastest trip glances at the map only when the road looks confusing.</div>
+
+  <div class="key"><b>The bill that decides.</b> Total work = (steps taken) &times; (evaluations per step). A stylised bill. Fixed step: 400 &times; 1 = <strong>400</strong>. Armijo: 150 &times; 2 = <strong>300</strong>. Exact search: 40 &times; 12 = <strong>480</strong>. The middle ground wins here &mdash; but change the ratios and the winner flips. That is the slide's point: fewer steps "might more than compensate" the per-step cost.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Price the three policies yourself</h4>
+    <p class="muted" style="font-size:14px">Drag how many steps exact search saves, and what each of its steps costs. What to look for: the winning bar <strong>flips</strong> as you drag &mdash; neither precision nor cheapness wins by default; only the product does.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="costSliders"></div>
+        <div class="readout" id="costOut"></div>
+      </div>
+      <div><canvas id="costCanvas" width="440" height="320" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>Deep-learning loops choose schedules. Per-step search across billions of weights and noisy mini-batches is unaffordable. Classical solvers (BFGS family, conjugate gradient) keep an inexact line search; Newton-style methods keep the exact kind.</p>
+
+  <div class="key"><b>Pitfall.</b> Comparing optimisers by iteration count alone is a classic trap. Half the steps at ten times the per-step work is five times slower. Price the product.</div>
+
+  <div class="recall"><div class="q">Check yourself: your exact line search now needs only 4 evaluations per step and 40 steps. Fixed-step still needs 400 cheap steps. Who wins?</div>
+    <button class="btn" data-recall>Reveal answer</button>
+    <div class="ans">Exact search: 40 &times; 4 = 160 evaluations against 400. The product decides &mdash; and cheap, accurate per-step searches are exactly when line search earns its price.</div>
+  </div>
+
+  <p class="muted"><b>Bridge &rarr;</b> One cost we have ignored all along: every gradient so far read the <em>whole</em> dataset. Time to fix that.</p>
+ </div>
+</section>
+
+<section id="sgd">
+ <div class="wrap">
+  <div class="kicker">14 &middot; Scaling up</div>
+  <h2>Stochastic Gradient Descent</h2>
+  <p class="lead">A training loss is a sum over data points: \(L(\theta) = \sum_{n=1}^{N} L_n(\theta)\), with \(\theta\) the parameters and \(N\) the number of points. Batch gradient descent differentiates the <em>whole</em> sum &mdash; every step reads all \(N\) points. With \(N\) in the millions, one step is a full pass over the data.</p>
+
+  <div class="note"><b>Analogy first.</b> To season a huge pot of soup you do not drink the pot. Stir, taste a spoonful, adjust, repeat. The spoon misjudges a little every time &mdash; but it is nearly free, and repeated rounds land the seasoning. Stir first: the spoon must be a random sample.</div>
+
+  <h3>Sample the data, keep the rule</h3>
+  <p>Let \(S\) be a random subset of indices. Build the sample-only objective and swap its gradient into the update:</p>
+  <div class="eqbox">$$ J(S) = \sum_{i \in S} \big( \boldsymbol{w}^{\top} \boldsymbol{X}_i - y_i \big)^2, \qquad \boldsymbol{w} \;\leftarrow\; \boldsymbol{w} - \alpha \left[ \frac{\partial J(S)}{\partial w_1},\, \dots,\, \frac{\partial J(S)}{\partial w_d} \right]^{\top} $$</div>
+  <p>A moderate \(S\) is <strong>mini-batch</strong> gradient descent; \(|S| = 1\) is SGD proper. Why it works: the sampled gradient is an <strong>unbiased</strong> estimate, right on average over the draw. So errors cancel across many steps. With a suitably <em>decreasing</em> rate (and mild assumptions), SGD converges <strong>almost surely</strong> (probability one) to a local minimum. And batch size sets the noise: larger mini-batches, lower variance.</p>
+
+  <div class="key"><b>Worked example, real numbers</b> (Chapter 01's data, \(\boldsymbol{X}_i = (x_i, 1)\), at \(\boldsymbol{w} = (0,0)\)).<br>
+  Per-point gradients \(2 (\boldsymbol{w}^{\top} \boldsymbol{X}_i - y_i) \boldsymbol{X}_i\): \((-6.2,-6.2)\), \((-19.6,-9.8)\), \((-43.8,-14.6)\), \((-72.8,-18.2)\).<br>
+  Full gradient (the sum): \((\textbf{-142.4},\, \textbf{-48.8})\).<br>
+  Unbiasedness, live: draw one point uniformly, scale by \(N = 4\); the four possible estimates average to exactly \((-142.4, -48.8)\).<br>
+  Direction error vs the truth: single points miss by 26.1&deg;, 7.7&deg;, 0.5&deg;, 4.9&deg; (mean 9.8&deg;); two-point batches mean 4.3&deg;; full batch 0&deg;. Bigger spoonfuls, straighter aim.</div>
+
+  <div class="lab">
+    <h4 style="margin-top:4px">&#9889; Train the Chapter-01 line by spoonfuls</h4>
+    <p class="muted" style="font-size:14px">Choose the batch size and run. What to look for: <strong>batch 1 wanders, batch 4 glides</strong> &mdash; same landscape, different noise. With a constant rate the batch-1 walk jitters around the star forever; switch on <strong>decaying rate</strong> and the jitter spends itself down. Reshuffle to see a different random story.</p>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="chips">
+          <button class="btn active" id="sgB1">batch 1</button>
+          <button class="btn" id="sgB2">batch 2</button>
+          <button class="btn" id="sgB4">batch 4 (full)</button>
+          <button class="btn" id="sgDecay">decaying rate: ON</button>
+        </div>
+        <div class="chips">
+          <button class="btn" id="sgStep">step &#9656;</button>
+          <button class="btn" id="sgRun">run &times;40</button>
+          <button class="btn" id="sgShuffle">&#127922; reshuffle</button>
+          <button class="btn" id="sgReset">&#8634; reset</button>
+        </div>
+        <div class="readout" id="sgOut"></div>
+      </div>
+      <div><canvas id="sgCanvas" width="440" height="380" style="width:100%;height:auto"></canvas></div>
+    </div>
+  </div>
+
+  <h4>Where this shows up in ML</h4>
+  <p>It trains modern AI. Language models, vision models, recommenders &mdash; all of them. Epoch, mini-batch, batch size, schedule: the daily dialect of deep learning. Adam, the default optimiser, is SGD wearing per-weight step sizes.</p>
+
+  <div class="key"><b>Pitfall.</b> SGD's noise never dies on its own: constant rate &rarr; eternal jitter around the minimum. The convergence promise needs a decreasing rate (Chapter 08). And judge progress over many steps, not one (Chapter 09's \(m\)-step rule).</div>
+
+  <div class="recall"><div class="q">Check yourself: one random point gives a gradient that is wrong at almost every step. Why does the walk still reach the valley?</div>
+    <button class="btn" data-recall>Reveal answer</button>
+    <div class="ans">The estimate is unbiased &mdash; right on average &mdash; so the errors cancel across steps. A decaying rate shrinks the leftover jitter. Roughly right, many times, cheaply, beats exactly right once.</div>
+  </div>
+
+  <p class="muted"><b>Bridge &rarr;</b> That is the whole lecture. One page of recap, then go break the labs again.</p>
+ </div>
+</section>
+
+<section id="summary">
+ <div class="wrap">
+  <div class="kicker">15 &middot; Wrap up</div>
+  <h2>Key Takeaways</h2>
+  <p class="lead">One move: step against the gradient. Everything else in the lecture refines <em>how far</em> to step and <em>how much data</em> to consult.</p>
+  <div class="grid3">
+    <div class="card"><h4>The problem</h4><p class="muted" style="font-size:14px">Fitting = minimising a loss over parameters. Flat spots are candidates; curvature sorts minima from maxima; valleys come in local and global.</p></div>
+    <div class="card"><h4>The rule</h4><p class="muted" style="font-size:14px">\(\boldsymbol{x}_{i+1} = \boldsymbol{x}_i - \gamma_i (\nabla f)^{\top}\). Small enough steps give a falling staircase into a local minimum. First-order = scalable.</p></div>
+    <div class="card"><h4>The step size</h4><p class="muted" style="font-size:14px">Crawl, glide, or explode. Fixes: undo-and-halve, decay schedules (\(\alpha_0 e^{-kt}\), \(\alpha_0/(1{+}kt)\), step), bold driver (+5% / undo &amp; halve).</p></div>
+    <div class="card"><h4>Line search</h4><p class="muted" style="font-size:14px">Freeze the direction; minimise the 1-D curve \(h(\alpha)\). Perfect steps land at 90&deg;. Bracket the dip, then binary or golden-section narrows it.</p></div>
+    <div class="card"><h4>The economics</h4><p class="muted" style="font-size:14px">Total work = steps &times; work per step. Exact search: few pricey steps. Armijo: the everyday compromise. Newton demands the exact kind.</p></div>
+    <div class="card"><h4>SGD</h4><p class="muted" style="font-size:14px">Sample the data; the gradient stays right on average. Noise shrinks with batch size and with a decaying rate. This trains modern AI.</p></div>
+  </div>
+  <div class="note" style="margin-top:22px"><b>The thread.</b> Chapter 01's four little points became a loss. The loss became a landscape; the landscape got walked. The walk got a smarter stride. And the stride finally learned to read only a spoonful of data at a time. That spoonful-walk is running, right now, inside every large model you have heard of.</div>
+  <div class="chips" style="margin-top:18px">
+    <span class="tag">analogy before algebra</span>
+    <span class="tag">every symbol named</span>
+    <span class="tag">every slide example worked</span>
+    <span class="tag">bespoke canvas labs</span>
+    <span class="tag">offline &middot; file-safe</span>
+  </div>
+ </div>
+</section>
+
+</main>
+</div>
+
+<div class="foot">
+  ZC416 &middot; Topic 9: Gradient Descent.
+  An interactive companion page for the WILP lecture slides. Math renders with MathJax, the page's only external load. Every visual is hand-drawn canvas. It works offline from a double-click.
+</div>
+
+<script>
+/* shared utilities */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(x,d=3)=>{ if(!isFinite(x)) return '∞'; if(Math.abs(x)<1e-9)x=0; return x.toFixed(d); };
+
+/* slider factory: builds a .ctrl row, returns a getter */
+function makeSlider(host,opt,onInput){
+  const row=document.createElement('div');row.className='ctrl';
+  const lab=document.createElement('label');lab.innerHTML=opt.label;
+  const inp=document.createElement('input');
+  inp.type='range';inp.id=opt.id;
+  inp.min=opt.min;inp.max=opt.max;inp.step=opt.step;inp.value=opt.value;
+  const val=document.createElement('span');val.className='val';
+  const dec=(opt.step+'').includes('.')?(opt.step+'').split('.')[1].length:0;
+  const show=()=>{val.textContent=parseFloat(inp.value).toFixed(dec);};
+  inp.addEventListener('input',()=>{show();if(onInput)onInput(parseFloat(inp.value));});
+  row.appendChild(lab);row.appendChild(inp);row.appendChild(val);host.appendChild(row);
+  show();
+  return ()=>parseFloat(inp.value);
+}
+
+/* DPR-aware canvas */
+function setupCanvas(canvas,drawFn){
+  const ctx=canvas.getContext('2d');
+  function resize(){
+    const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+    const rect=canvas.getBoundingClientRect();
+    const cssW=rect.width||canvas.width;
+    const cssH=cssW*(canvas.height/canvas.width);
+    canvas.style.height=cssH+'px';
+    canvas.width=Math.round(cssW*dpr);
+    canvas.height=Math.round(cssH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    drawFn(ctx,cssW,cssH);
+  }
+  let raf=null;
+  window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(resize);});
+  resize();
+  return {redraw:()=>{const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+    drawFn(ctx,canvas.width/dpr,canvas.height/dpr);}};
+}
+
+/* the house colour ramp for landscapes (navy lows -> amber highs) */
+const STOPS=[[33,53,94],[44,90,160],[62,142,156],[159,191,143],[200,136,30]];
+function houseColor(t){t=t<0?0:t>1?1:t;const s=t*4,i=Math.floor(s),fr=s-i,a=STOPS[i],b=STOPS[Math.min(i+1,4)];
+  return Math.round(a[0]+(b[0]-a[0])*fr)+','+Math.round(a[1]+(b[1]-a[1])*fr)+','+Math.round(a[2]+(b[2]-a[2])*fr);}
+
+/* shade a 2-D field f(x,y) into a rect (a cheap heat map) */
+function shadeField(ctx,f,xmin,xmax,ymin,ymax,pad,W,H,pow){
+  pow=pow||0.5;
+  const cell=7;let zmin=1e18,zmax=-1e18;const vals=[];
+  for(let px=pad;px<W-pad;px+=cell){const col=[];
+    for(let py=pad;py<H-pad;py+=cell){
+      const x=xmin+(px-pad)/(W-2*pad)*(xmax-xmin);
+      const y=ymax-(py-pad)/(H-2*pad)*(ymax-ymin);
+      const z=f(x,y);col.push(z);if(z<zmin)zmin=z;if(z>zmax)zmax=z;}
+    vals.push(col);}
+  let ci=0;
+  for(let px=pad;px<W-pad;px+=cell,ci++){let ri=0;
+    for(let py=pad;py<H-pad;py+=cell,ri++){
+      const t=Math.pow((vals[ci][ri]-zmin)/((zmax-zmin)||1),pow);
+      ctx.fillStyle='rgba('+houseColor(t)+',0.9)';
+      ctx.fillRect(px,py,cell,cell);}}
+}
+
+/* scroll progress + scroll-spy */
+const tocLinks=$$('#toc a');
+const sections=tocLinks.map(a=>$(a.getAttribute('href')));
+function onScroll(){
+  const st=window.scrollY, h=document.body.scrollHeight-window.innerHeight;
+  $('#progbar').style.width=(100*st/(h||1))+'%';
+  let idx=0;
+  sections.forEach((sec,i)=>{ if(sec && sec.offsetTop-120<=st) idx=i; });
+  tocLinks.forEach((a,i)=>a.classList.toggle('active',i===idx));
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+
+/* demo registry */
+window.__demos=[];
+function runDemos(){ window.__demos.forEach(f=>{try{f();}catch(e){console.error(e);}}); }
+
+/* theme toggle */
+function initTheme(){
+  const btn=$('#themeBtn'); if(!btn)return;
+  const sync=()=>{const light=document.documentElement.getAttribute('data-theme')==='light';btn.innerHTML=light?'&#127769; Dark':'&#9728; Light';};
+  sync();
+  btn.addEventListener('click',()=>{
+    const root=document.documentElement, light=root.getAttribute('data-theme')==='light';
+    if(light){root.removeAttribute('data-theme');try{localStorage.setItem('lectheme','dark');}catch(e){}}
+    else{root.setAttribute('data-theme','light');try{localStorage.setItem('lectheme','light');}catch(e){}}
+    sync();
+  });
+}
+
+/* scroll reveal (never on canvas holders) */
+function initReveal(){
+  if(!('IntersectionObserver' in window))return;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),
+    {threshold:0.04,rootMargin:'0px 0px -4% 0px'});
+  $$('section .wrap > *').forEach(el=>{
+    if(el.classList.contains('lab')||el.querySelector('canvas')) return;
+    el.classList.add('reveal'); io.observe(el);
+  });
+}
+
+/* check-yourself recall cards */
+function initRecall(){
+  $$('[data-recall]').forEach(b=>b.addEventListener('click',function(){
+    const open=this.closest('.recall').classList.toggle('open');
+    this.textContent=open?'Hide answer':'Reveal answer';
+  }));
+}
+
+/* guided story mode */
+const STORY=[
+ {id:'intro',t:'Welcome',x:'One idea powers all of machine learning: measure the error, feel the slope, step downhill. Click the map to jump anywhere. Arrow keys drive this tour; space pauses.'},
+ {id:'fit',t:'Fitting a line',x:'Four points, two dials, one loss. Drag a and b and try to beat L = 0.072. You will feel what "optimization problem" means.'},
+ {id:'valleys',t:'Valleys and flat spots',x:'Drag along the quartic and read the curvature test live. Then roll downhill from both starts - two different valleys catch the ball.'},
+ {id:'gd',t:'The update rule',x:'The famous x minus gamma grad f, live on a narrow bowl. Watch it zig-zag across the steep direction while crawling along the shallow one.'},
+ {id:'bowl3d',t:'The landscape in 3-D',x:'Drag to rotate the surface. Then switch to the bumpy landscape and run both presets - nearly identical starts, different valleys.'},
+ {id:'stepsize',t:'The step size',x:'One slider, three fates: crawl, glide, explode. Find the divergence edge, then switch on undo-and-halve and watch it save the run.'},
+ {id:'exact',t:'The exact best step',x:'For a quadratic bowl the perfect step has a formula. Take perfect steps and check the console: each new direction meets the last at 90 degrees.'},
+ {id:'gradcheck',t:'Gradient checking',x:'Nudge, measure, divide. Shrink Delta and watch the amber secant rotate onto the true tangent - and the error shrink in step with Delta.'},
+ {id:'decay',t:'Learning-rate decay',x:'A big constant rate orbits the target forever. Switch on a decay schedule and the same start now lands. Compare exponential against inverse.'},
+ {id:'bold',t:'The bold driver',x:'Grow the rate 5 percent per win, halve on a crash. Step through and watch iteration 4: worse, undo, halve - then a spectacular recovery.'},
+ {id:'linesearch',t:'Line search',x:'Freeze the direction and the loss becomes a 1-D curve in alpha. Sweep to bracket its dip, and see why the perfect step lands at 90 degrees.'},
+ {id:'binary',t:'Binary search',x:'Probe the midpoint tilt, throw away half the bracket. Four probes cut the interval by 16x. The dip never escapes.'},
+ {id:'golden',t:'Golden-section search',x:'No slopes at all - just compare four values and drop the piece that cannot hold the minimum. Watch the doomed region turn red.'},
+ {id:'cost',t:'When is it worth it?',x:'Total work = steps times work per step. Drag the sliders and watch the winner flip. Neither precision nor cheapness wins by default.'},
+ {id:'sgd',t:'Stochastic gradient descent',x:'Taste a spoonful instead of drinking the pot. Batch of 1 wanders, batch of 4 glides - and decay calms the wander. This trains modern AI.'},
+ {id:'summary',t:'Key takeaways',x:'One move, many refinements. Test yourself on the recall cards, then go break the labs again - that is where the intuition lives.'}
+];
+let storyI=0,storyPlaying=false,storyTimer=null,storyActive=false;
+function storySec(){return $('#'+STORY[storyI].id);}
+function positionSpot(){
+  const sec=storySec(); if(!sec)return; const el=sec.querySelector('h1,h2')||sec;
+  const r=el.getBoundingClientRect(), sp=$('#storyspot');
+  sp.style.display='block';
+  sp.style.left=(r.left-12)+'px'; sp.style.top=(r.top-10)+'px';
+  sp.style.width=(r.width+24)+'px'; sp.style.height=(r.height+20)+'px';
+}
+function showStory(){
+  const s=STORY[storyI];
+  $('#storyStep').textContent='Step '+(storyI+1)+' / '+STORY.length;
+  $('#storyTitle').textContent=s.t; $('#storyText').innerHTML=s.x;
+  $$('#storyDots i').forEach((d,i)=>d.classList.toggle('on',i===storyI));
+  const sec=storySec();
+  if(sec){const y=sec.getBoundingClientRect().top+window.scrollY-86;window.scrollTo({top:y,behavior:'smooth'});}
+  setTimeout(positionSpot,520);
+}
+function resetTimer(){clearInterval(storyTimer);if(storyPlaying)storyTimer=setInterval(()=>{if(storyI===STORY.length-1){togglePlay();}else nextStory();},10000);}
+function nextStory(){storyI=(storyI+1)%STORY.length;showStory();resetTimer();}
+function prevStory(){storyI=(storyI-1+STORY.length)%STORY.length;showStory();resetTimer();}
+function togglePlay(){storyPlaying=!storyPlaying;$('#storyPlay').innerHTML=storyPlaying?'&#9208; pause':'&#9654; play';resetTimer();}
+function spotFollow(){if(storyActive)positionSpot();}
+function startStory(){
+  storyActive=true;storyI=0;storyPlaying=true;
+  $('#storycard').style.display='block';$('#storyPlay').innerHTML='&#9208; pause';
+  $('#storyDots').innerHTML=STORY.map((_,i)=>'<i data-i="'+i+'"></i>').join('');
+  $$('#storyDots i').forEach(d=>d.addEventListener('click',()=>{storyI=+d.dataset.i;showStory();resetTimer();}));
+  showStory();resetTimer();
+  window.addEventListener('scroll',spotFollow,{passive:true});
+  window.addEventListener('resize',positionSpot);
+}
+function endStory(){
+  storyActive=false;storyPlaying=false;clearInterval(storyTimer);
+  $('#storycard').style.display='none';$('#storyspot').style.display='none';
+  window.removeEventListener('scroll',spotFollow);window.removeEventListener('resize',positionSpot);
+}
+function initStory(){
+  if(!$('#tourBtn'))return;
+  $('#tourBtn').addEventListener('click',startStory);
+  $('#storyExit').addEventListener('click',endStory);
+  $('#storyNext').addEventListener('click',nextStory);
+  $('#storyPrev').addEventListener('click',prevStory);
+  $('#storyPlay').addEventListener('click',togglePlay);
+  document.addEventListener('keydown',e=>{if(!storyActive)return;
+    if(e.key==='Escape')endStory();else if(e.key==='ArrowRight')nextStory();
+    else if(e.key==='ArrowLeft')prevStory();else if(e.key===' '){e.preventDefault();togglePlay();}});
+}
+
+/* ============================================================
+   DEMOS
+   ============================================================ */
+
+/* hero: a loss curve with a ball easing to the minimum */
+window.__demos.push(function(){
+  const c=$('#heroCanvas'); if(!c)return; const ctx=c.getContext('2d');
+  const W=c.width,H=c.height,pad=24;
+  const loss=u=>0.55*Math.pow(u,2)+0.12*Math.sin(u*7+1)+0.18;
+  let t=0;
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    const X=u=>pad+(u+1)/2*(W-2*pad);
+    const Y=v=>H-pad-v*(H-2*pad)*1.4;
+    ctx.strokeStyle='rgba(120,150,210,.5)';ctx.lineWidth=2;ctx.beginPath();
+    let minU=0,minV=1e9;
+    for(let px=pad;px<=W-pad;px++){const u=(px-pad)/(W-2*pad)*2-1;const v=loss(u);
+      if(v<minV){minV=v;minU=u;} const y=Y(v); if(px===pad)ctx.moveTo(px,y);else ctx.lineTo(px,y);}
+    ctx.stroke();
+    ctx.fillStyle='#62e88a';ctx.shadowColor='#62e88a';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(X(minU),Y(minV),5,0,7);ctx.fill();ctx.shadowBlur=0;
+    t+=0.02;
+    const start=-0.85, u=minU+(start-minU)*Math.max(0,Math.cos(t)*0.5+0.5);
+    const bx=X(u),by=Y(loss(u));
+    ctx.strokeStyle='rgba(155,140,255,.55)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(X(minU),Y(minV));ctx.stroke();
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=14;
+    ctx.beginPath();ctx.arc(bx,by,8,0,7);ctx.fill();ctx.shadowBlur=0;
+    requestAnimationFrame(frame);
+  }
+  frame();
+});
+
+/* 00 journey map (click to jump) */
+window.__demos.push(function(){
+  const c=$('#mapCanvas'); if(!c) return;
+  const stops=[
+    {t:'The problem', s:'a loss to minimise', hash:'#fit', col:'#19c4ff'},
+    {t:'The rule', s:'x − γ·∇f', hash:'#gd', col:'#38f0d8'},
+    {t:'Step size', s:'crawl / glide / explode', hash:'#stepsize', col:'#ffcb6b'},
+    {t:'Smarter steps', s:'decay · bold driver', hash:'#decay', col:'#9b8cff'},
+    {t:'Line search', s:'binary · golden', hash:'#linesearch', col:'#ff6ec7'},
+    {t:'SGD', s:'sample & scale', hash:'#sgd', col:'#62e88a'}
+  ];
+  let hover=-1,nodes=[];
+  const cv=setupCanvas(c,(ctx,W,H)=>{
+    ctx.clearRect(0,0,W,H);
+    const padX=70, top=56, bot=H-58;
+    nodes=stops.map((s,i)=>{const fx=i/(stops.length-1);
+      return {x:padX+fx*(W-2*padX), y:top+(bot-top)*(0.16*fx+0.84*fx*fx), s};});
+    ctx.strokeStyle='rgba(120,150,210,.45)';ctx.lineWidth=2.5;ctx.beginPath();
+    nodes.forEach((n,i)=>{i?ctx.lineTo(n.x,n.y):ctx.moveTo(n.x,n.y);});ctx.stroke();
+    nodes.forEach((n,i)=>{
+      ctx.beginPath();ctx.arc(n.x,n.y,hover===i?17:14,0,7);
+      ctx.fillStyle='#0e1729';ctx.fill();
+      ctx.lineWidth=hover===i?3:2.2;ctx.strokeStyle=n.s.col;ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 12px monospace';ctx.textAlign='center';
+      ctx.fillText(String(i+1),n.x,n.y+4);
+      ctx.font='bold 12.5px sans-serif';ctx.fillStyle=hover===i?'#fff':'#93a4c8';
+      ctx.fillText(n.s.t,n.x,n.y-24);
+      ctx.font='11px monospace';ctx.fillStyle='#64759c';
+      ctx.fillText(n.s.s,n.x,n.y+34);
+      ctx.textAlign='left';
+    });
+  });
+  const pick=ev=>{const r=c.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top;
+    let b=-1,bd=1e9; nodes.forEach((n,i)=>{const d=(n.x-mx)**2+(n.y-my)**2; if(d<bd){bd=d;b=i;}});
+    return bd<1300?b:-1;};
+  c.addEventListener('mousemove',ev=>{const h=pick(ev); if(h!==hover){hover=h;c.style.cursor=h>=0?'pointer':'default';cv.redraw();}});
+  c.addEventListener('click',ev=>{const h=pick(ev); if(h>=0) location.hash=nodes[h].s.hash;});
+});
+
+/* 01 line-fit lab */
+window.__demos.push(function(){
+  const c=$('#fitCanvas'); if(!c)return;
+  const host=$('#fitSliders'); host.innerHTML='';
+  const XS=[1,2,3,4], YS=[3.1,4.9,7.3,9.1];
+  const getA=makeSlider(host,{id:'fitA',label:'a (slope)',min:'-1',max:'4',step:'0.01',value:'1'},()=>render());
+  const getB=makeSlider(host,{id:'fitB',label:'b (intercept)',min:'-2',max:'4',step:'0.01',value:'1'},()=>render());
+  function setAB(a,b){$('#fitA').value=a;$('#fitB').value=b;
+    $('#fitA').dispatchEvent(new Event('input'));$('#fitB').dispatchEvent(new Event('input'));}
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const a=getA(),b=getB(),pad=42;
+    const xmin=0,xmax=4.6,ymin=-1,ymax=11;
+    const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad), Y=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(120,150,210,.25)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.moveTo(X(0),pad);ctx.lineTo(X(0),H-pad);ctx.stroke();
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('x',W-pad+6,Y(0)+4);ctx.fillText('y',X(0)-14,pad+4);
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2.4;ctx.beginPath();
+    ctx.moveTo(X(xmin),Y(a*xmin+b));ctx.lineTo(X(xmax),Y(a*xmax+b));ctx.stroke();
+    XS.forEach((x,i)=>{
+      const yp=a*x+b;
+      ctx.strokeStyle='rgba(255,203,107,.85)';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(X(x),Y(yp));ctx.lineTo(X(x),Y(YS[i]));ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#ff6b81';ctx.beginPath();ctx.arc(X(x),Y(YS[i]),6,0,7);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.stroke();
+      ctx.fillStyle='#93a4c8';ctx.font='10.5px monospace';
+      ctx.fillText((YS[i]-yp>=0?'+':'')+fmt(YS[i]-yp,2),X(x)+8,(Y(yp)+Y(YS[i]))/2);
+    });
+    ctx.fillStyle='#93a4c8';ctx.font='11.5px monospace';
+    ctx.fillText('y = '+fmt(a,2)+'x + '+fmt(b,2),pad+6,pad-8);
+  });
+  function render(){
+    cv.redraw();
+    const a=getA(),b=getB();
+    let L=0,rows='';
+    XS.forEach((x,i)=>{const g=YS[i]-(a*x+b);L+=g*g;
+      rows+='  x='+x+':  gap '+(g>=0?'+':'')+fmt(g,2)+'   gap² '+fmt(g*g,3)+'\n';});
+    const best=L<=0.0721;
+    $('#fitOut').innerHTML='L(a,b) = Σ (y − (ax+b))²\n'+rows+
+      'loss L('+fmt(a,2)+', '+fmt(b,2)+') = <span class="'+(best?'g':'hl')+'">'+fmt(L,3)+'</span>\n'+
+      (best?'<span class="g">that is the floor — no pair does better</span>':
+            'best possible: <span class="g">0.072</span> at (2.04, 1.00)');
+  }
+  $('#fitBest').addEventListener('click',()=>setAB(2.04,1.0));
+  $('#fitBad').addEventListener('click',()=>setAB((Math.random()*5-1).toFixed(2),(Math.random()*6-2).toFixed(2)));
+  render();
+});
+
+/* 02 quartic explorer */
+window.__demos.push(function(){
+  const c=$('#quarticCanvas'); if(!c)return;
+  const host=$('#quarticSliders'); host.innerHTML='';
+  const l=x=>x*x*x*x+7*x*x*x+5*x*x-17*x+3;
+  const dl=x=>4*x*x*x+21*x*x+10*x-17;
+  const ddl=x=>12*x*x+42*x+10;
+  const xmin=-6.4,xmax=2.4,ymin=-60,ymax=85;
+  let px0=-6, trail=[], auto=null;
+  const getX=makeSlider(host,{id:'qx',label:'x',min:'-6',max:'2.2',step:'0.01',value:'-6'},v=>{px0=v;trail=[];render();});
+  const getLr=makeSlider(host,{id:'qlr',label:'γ (rate)',min:'0.0005',max:'0.004',step:'0.0005',value:'0.002'},()=>render());
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=40;
+    const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad), Y=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.stroke();
+    ctx.strokeStyle='#2a3a5c';ctx.lineWidth=2;ctx.beginPath();
+    for(let p=pad;p<=W-pad;p++){const xx=xmin+(p-pad)/(W-2*pad)*(xmax-xmin);
+      const yy=Y(clamp(l(xx),ymin,ymax));p===pad?ctx.moveTo(p,yy):ctx.lineTo(p,yy);}
+    ctx.stroke();
+    [[-4.480,'global min','#62e88a'],[-1.432,'local max','#ff6b81'],[0.662,'local min','#62e88a']].forEach(([mx,lab,col])=>{
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(mx),Y(l(mx)),4.5,0,7);ctx.fill();
+      ctx.font='10px monospace';ctx.fillStyle='#93a4c8';ctx.textAlign='center';
+      ctx.fillText(lab,X(mx),Y(l(mx))+(lab==='local max'?-10:16));ctx.textAlign='left';
+    });
+    ctx.strokeStyle='rgba(255,203,107,.6)';ctx.lineWidth=1.5;ctx.beginPath();
+    trail.forEach((tx,i)=>{const p=[X(clamp(tx,xmin,xmax)),Y(clamp(l(tx),ymin,ymax))];
+      i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});ctx.stroke();
+    trail.forEach(tx=>{ctx.fillStyle='rgba(255,203,107,.55)';ctx.beginPath();
+      ctx.arc(X(clamp(tx,xmin,xmax)),Y(clamp(l(tx),ymin,ymax)),3,0,7);ctx.fill();});
+    const x=px0,s=dl(x),y0=l(x);
+    const span=0.85;
+    ctx.save();ctx.beginPath();ctx.rect(pad,6,W-2*pad,H-pad-6);ctx.clip();
+    ctx.strokeStyle='#9b8cff';ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.beginPath();
+    ctx.moveTo(X(x-span),Y(y0-s*span));ctx.lineTo(X(x+span),Y(y0+s*span));ctx.stroke();ctx.setLineDash([]);
+    ctx.restore();
+    const dir=s>0?-1:1;
+    ctx.strokeStyle='#9b8cff';ctx.lineWidth=2.4;ctx.beginPath();
+    ctx.moveTo(X(x),Y(y0)-18);ctx.lineTo(X(x)+dir*26,Y(y0)-18);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X(x)+dir*26,Y(y0)-18);
+    ctx.lineTo(X(x)+dir*18,Y(y0)-23);ctx.lineTo(X(x)+dir*18,Y(y0)-13);ctx.closePath();
+    ctx.fillStyle='#9b8cff';ctx.fill();
+    ctx.font='10px monospace';ctx.fillText('downhill',X(x)+ (dir>0?2:-52),Y(y0)-28);
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(X(x),Y(clamp(y0,ymin,ymax)),7.5,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function classify(x){
+    const s=dl(x);
+    if(Math.abs(s)<0.6){const k=ddl(x);
+      return k>0?'<span class="g">flat + curvature '+fmt(k,1)+' &gt; 0 → local MIN</span>'
+               :'<span class="r">flat + curvature '+fmt(k,1)+' &lt; 0 → local MAX</span>';}
+    return 'slope ≠ 0 → not stationary; downhill is '+(s>0?'LEFT':'RIGHT');
+  }
+  function render(){
+    cv.redraw();
+    const x=px0;
+    $('#quarticOut').innerHTML=
+      'x = '+fmt(x,3)+'    l(x) = '+fmt(l(x),2)+'\n'+
+      "slope l'(x) = 4x³+21x²+10x−17 = <span class=\"hl\">"+fmt(dl(x),2)+'</span>\n'+
+      "curvature l''(x) = 12x²+42x+10 = "+fmt(ddl(x),2)+'\n'+classify(x);
+  }
+  function step(){const s=dl(px0);px0=clamp(px0-getLr()*s,xmin+0.05,xmax-0.05);
+    trail.push(px0);if(trail.length>60)trail.shift();
+    $('#qx').value=px0;$('#qx').dispatchEvent(new Event('input'));}
+  function setAuto(on){const b=$('#qRoll');
+    if(on){if(auto)return;b.textContent='⏸ stop';b.classList.add('active');
+      auto=setInterval(()=>{if(Math.abs(dl(px0))<0.5){setAuto(false);return;}step();},120);}
+    else{clearInterval(auto);auto=null;b.innerHTML='roll downhill &#9656;';b.classList.remove('active');}}
+  $('#qRoll').addEventListener('click',()=>setAuto(!auto));
+  $('#qStartL').addEventListener('click',()=>{setAuto(false);trail=[];$('#qx').value=-6;$('#qx').dispatchEvent(new Event('input'));});
+  $('#qStartR').addEventListener('click',()=>{setAuto(false);trail=[];$('#qx').value=2;$('#qx').dispatchEvent(new Event('input'));});
+  $('#qReset').addEventListener('click',()=>{setAuto(false);trail=[];$('#qx').value=-6;$('#qx').dispatchEvent(new Event('input'));});
+  render();
+});
+
+/* 03 gradient descent on the narrow quadratic bowl */
+window.__demos.push(function(){
+  const c=$('#gdCanvas'); if(!c)return;
+  const host=$('#gdSliders'); host.innerHTML='';
+  const f=(x,y)=>x*x+x*y+10*y*y-5*x-3*y;
+  const gx=(x,y)=>2*x+y-5, gy=(x,y)=>x+20*y-3;
+  const xmin=-4.5,xmax=6,ymin=-2.8,ymax=2.8, star=[2.4872,0.0256];
+  let p={x:-3,y:-1}, trail=[{x:-3,y:-1}], steps=0;
+  const getLr=makeSlider(host,{id:'gdLr',label:'γ (rate)',min:'0.005',max:'0.115',step:'0.005',value:'0.085'},()=>render());
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=34;
+    const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad), Y=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    shadeField(ctx,f,xmin,xmax,ymin,ymax,pad,W,H,0.45);
+    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('x1',W-pad-16,H-pad+14);ctx.fillText('x2',pad-24,pad+10);
+    ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();
+    trail.forEach((t,i)=>{const px=X(clamp(t.x,xmin,xmax)),py=Y(clamp(t.y,ymin,ymax));i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    ctx.strokeStyle='rgba(255,203,107,.95)';ctx.lineWidth=1.8;ctx.beginPath();
+    trail.forEach((t,i)=>{const px=X(clamp(t.x,xmin,xmax)),py=Y(clamp(t.y,ymin,ymax));i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    ctx.fillStyle='#fff';ctx.strokeStyle='#62e88a';ctx.lineWidth=2;
+    ctx.save();ctx.translate(X(star[0]),Y(star[1]));ctx.beginPath();
+    for(let k=0;k<10;k++){const r=k%2?4:9,a=Math.PI/5*k-Math.PI/2;ctx.lineTo(r*Math.cos(a),r*Math.sin(a));}
+    ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    const bx=X(clamp(p.x,xmin,xmax)),by=Y(clamp(p.y,ymin,ymax));
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(bx,by,7,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function render(){
+    cv.redraw();
+    const g=[gx(p.x,p.y),gy(p.x,p.y)], lr=getLr();
+    const diverged=Math.abs(p.x)>50||Math.abs(p.y)>50;
+    $('#gdOut').innerHTML='step '+steps+':  x = ('+fmt(p.x,3)+', '+fmt(p.y,3)+')   f = '+fmt(f(p.x,p.y),3)+'\n'+
+      '∇f = (2x₁+x₂−5, x₁+20x₂−3) = (<span class="hl">'+fmt(g[0],2)+'</span>, <span class="hl">'+fmt(g[1],2)+'</span>)\n'+
+      'next: x − '+fmt(lr,3)+'·∇f\n'+
+      (diverged?'<span class="r">DIVERGED — the steep direction (curvature 20) snapped</span>':
+       lr>0.0997?'<span class="r">γ &gt; 0.0997 = 2/20.06 → steps grow → diverges</span>':
+       '<span class="g">γ below the 0.0997 ceiling → falling staircase to the star</span>');
+  }
+  function step(){const g=[gx(p.x,p.y),gy(p.x,p.y)];
+    p={x:clamp(p.x-getLr()*g[0],-1e6,1e6),y:clamp(p.y-getLr()*g[1],-1e6,1e6)};
+    trail.push({x:p.x,y:p.y});if(trail.length>60)trail.shift();steps++;render();}
+  $('#gdStep').addEventListener('click',step);
+  $('#gdRun').addEventListener('click',()=>{let n=0;const t=setInterval(()=>{step();if(++n>=25)clearInterval(t);},55);});
+  $('#gdReset').addEventListener('click',()=>{p={x:-3,y:-1};trail=[{x:-3,y:-1}];steps=0;render();});
+  render();
+});
+
+/* 04 rotatable 3-D surface: convex bowl vs two valleys */
+window.__demos.push(function(){
+  const c=$('#surfCanvas'); if(!c) return;
+  const host=$('#surfSliders'); host.innerHTML='';
+  const SURF={
+    convex:{ f:(x,y)=>0.42*x*x+0.16*y*y, gx:(x,y)=>0.84*x, gy:(x,y)=>0.32*y,
+             mins:[[0,0]], hill:null, A:{x:2.7,y:2.8}, B:{x:-2.6,y:-2.5} },
+    bumpy:{  f:(x,y)=>0.06*(x*x-4)*(x*x-4)+0.18*y*y,
+             gx:(x,y)=>0.24*x*(x*x-4), gy:(x,y)=>0.36*y,
+             mins:[[-2,0],[2,0]], hill:[0,0], A:{x:-0.7,y:2.7}, B:{x:0.7,y:2.7} }
+  };
+  let mode='convex';
+  const S=()=>SURF[mode];
+  const R=3.2,N=20;
+  let az=0.9, el=0.6;
+  let p={...SURF.convex.A}, trail=[{...p}], steps=0;
+  const getLr=makeSlider(host,{id:'surfLr',label:'η (rate)',min:'0.02',max:'1.15',step:'0.02',value:'0.18'},()=>render());
+  const cv=setupCanvas(c,function(ctx,W,H){
+    ctx.clearRect(0,0,W,H);
+    const f=S().f;
+    const cx=W*0.5, cy=H*0.62, scale=Math.min(W,H)/(R*2.7);
+    let zmax=-1e9;for(let i=0;i<=8;i++)for(let j=0;j<=8;j++)zmax=Math.max(zmax,f(-R+i/4*R,-R+j/4*R));
+    const ca=Math.cos(az),sa=Math.sin(az),ce=Math.cos(el),se=Math.sin(el);
+    const proj=(x,y,z)=>{const zc=z-zmax*0.5,Xr=x*ca-y*sa,Yr=x*sa+y*ca,Y2=Yr*ce-zc*se,Z2=Yr*se+zc*ce;return{sx:cx+Xr*scale,sy:cy-Z2*scale*0.92,depth:Y2};};
+    const cells=[];
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+      const x0=-R+i/N*2*R,x1=-R+(i+1)/N*2*R,y0=-R+j/N*2*R,y1=-R+(j+1)/N*2*R;
+      const z00=f(x0,y0),z10=f(x1,y0),z11=f(x1,y1),z01=f(x0,y1);
+      const P=[proj(x0,y0,z00),proj(x1,y0,z10),proj(x1,y1,z11),proj(x0,y1,z01)];
+      cells.push({P,t:((z00+z10+z11+z01)/4)/zmax,depth:(P[0].depth+P[1].depth+P[2].depth+P[3].depth)/4});
+    }
+    cells.sort((a,b)=>b.depth-a.depth);
+    cells.forEach(cl=>{ctx.fillStyle='rgba('+houseColor(cl.t)+',0.97)';ctx.strokeStyle='rgba(255,255,255,0.10)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(cl.P[0].sx,cl.P[0].sy);for(let k=1;k<4;k++)ctx.lineTo(cl.P[k].sx,cl.P[k].sy);
+      ctx.closePath();ctx.fill();ctx.stroke();});
+    const lift=zmax*0.02;
+    function trace(col,wd){ctx.strokeStyle=col;ctx.lineWidth=wd;ctx.lineCap='round';ctx.beginPath();
+      trail.forEach((tp,i)=>{const P=proj(tp.x,tp.y,f(tp.x,tp.y)+lift);i?ctx.lineTo(P.sx,P.sy):ctx.moveTo(P.sx,P.sy);});ctx.stroke();}
+    trace('rgba(255,255,255,.9)',3.2); trace('rgba(255,203,107,.98)',1.7);
+    S().mins.forEach(m=>{const Pm=proj(m[0],m[1],f(m[0],m[1])+lift);
+      ctx.fillStyle='#62e88a';ctx.beginPath();ctx.arc(Pm.sx,Pm.sy,5.5,0,7);ctx.fill();});
+    if(S().hill){const Ph=proj(S().hill[0],S().hill[1],f(S().hill[0],S().hill[1])+lift);
+      ctx.fillStyle='#ff6b81';ctx.beginPath();ctx.arc(Ph.sx,Ph.sy,4.5,0,7);ctx.fill();}
+    const Pb=proj(p.x,p.y,f(p.x,p.y)+lift);
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(Pb.sx,Pb.sy,7,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function nearestMin(){let best=null,bd=1e9;
+    S().mins.forEach(m=>{const d=(m[0]-p.x)**2+(m[1]-p.y)**2;if(d<bd){bd=d;best=m;}});
+    return {m:best,d:Math.sqrt(bd)};}
+  function render(){cv.redraw();
+    const nm=nearestMin(), settled=Math.hypot(S().gx(p.x,p.y),S().gy(p.x,p.y))<0.05;
+    $('#surfOut').innerHTML='mode: '+(mode==='convex'?'convex bowl (one drain)':'two valleys + a ridge')+'\n'+
+      'step '+steps+':  (x, y) = ('+fmt(p.x,2)+', '+fmt(p.y,2)+')   loss = '+fmt(S().f(p.x,p.y),3)+'\n'+
+      (settled?'<span class="g">settled near the minimum at ('+nm.m[0]+', '+nm.m[1]+')</span>'
+              :'nearest drain: ('+nm.m[0]+', '+nm.m[1]+')  ·  <span class="muted">drag the surface to rotate</span>');}
+  function setP(q){p={x:q.x,y:q.y};trail=[{...p}];steps=0;render();}
+  function step(){p={x:clamp(p.x-getLr()*S().gx(p.x,p.y),-R,R),y:clamp(p.y-getLr()*S().gy(p.x,p.y),-R,R)};
+    trail.push({...p});if(trail.length>70)trail.shift();steps++;render();}
+  $('#surfStep').addEventListener('click',step);
+  $('#surfRun').addEventListener('click',()=>{let n=0;const t=setInterval(()=>{step();if(++n>=30)clearInterval(t);},50);});
+  $('#surfReset').addEventListener('click',()=>setP(S().A));
+  $('#surfA').addEventListener('click',()=>setP(S().A));
+  $('#surfB').addEventListener('click',()=>setP(S().B));
+  $('#surfConvex').addEventListener('click',function(){mode='convex';this.classList.add('active');$('#surfBumpy').classList.remove('active');setP(S().A);});
+  $('#surfBumpy').addEventListener('click',function(){mode='bumpy';this.classList.add('active');$('#surfConvex').classList.remove('active');setP(S().A);});
+  let drag=false,lx=0,ly=0;
+  c.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;try{c.setPointerCapture(e.pointerId);}catch(_){}});
+  c.addEventListener('pointermove',e=>{if(!drag)return;az+=(e.clientX-lx)*0.01;el=clamp(el+(e.clientY-ly)*0.01,0.12,1.45);lx=e.clientX;ly=e.clientY;cv.redraw();});
+  c.addEventListener('pointerup',()=>{drag=false;});
+  render();
+});
+
+/* 05 step-size lab with undo-and-halve */
+window.__demos.push(function(){
+  const c=$('#ssCanvas'); if(!c)return;
+  const host=$('#ssSliders'); host.innerHTML='';
+  const F=x=>x*x;
+  const xmin=-7,xmax=7,ymax=46;
+  let x=4, trail=[4], steps=0, adapt=false, log=[];
+  const getLr=makeSlider(host,{id:'ssLr',label:'γ (rate)',min:'0.05',max:'1.3',step:'0.05',value:'0.45'},()=>render());
+  function setLr(v){$('#ssLr').value=v;$('#ssLr').dispatchEvent(new Event('input'));}
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=40;
+    const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad), Y=v=>H-pad-(v/ymax)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.stroke();
+    ctx.strokeStyle='#2a3a5c';ctx.lineWidth=2;ctx.beginPath();
+    for(let p2=pad;p2<=W-pad;p2++){const xx=xmin+(p2-pad)/(W-2*pad)*(xmax-xmin);
+      const yy=Y(Math.min(F(xx),ymax));p2===pad?ctx.moveTo(p2,yy):ctx.lineTo(p2,yy);}
+    ctx.stroke();
+    ctx.fillStyle='#62e88a';ctx.beginPath();ctx.arc(X(0),Y(0),5,0,7);ctx.fill();
+    ctx.font='10.5px monospace';ctx.fillStyle='#93a4c8';ctx.fillText('min x*=0',X(0)-26,Y(0)+16);
+    ctx.strokeStyle='rgba(255,203,107,.6)';ctx.lineWidth=1.5;ctx.beginPath();
+    trail.forEach((tx,i)=>{const px=X(clamp(tx,xmin,xmax)),py=Y(Math.min(F(tx),ymax));
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    trail.forEach(tx=>{ctx.fillStyle='rgba(255,203,107,.5)';ctx.beginPath();
+      ctx.arc(X(clamp(tx,xmin,xmax)),Y(Math.min(F(tx),ymax)),3,0,7);ctx.fill();});
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(X(clamp(x,xmin,xmax)),Y(Math.min(F(x),ymax)),7.5,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function render(){
+    cv.redraw();
+    const lr=getLr(), fac=1-2*lr;
+    const regime=Math.abs(fac)<1?'<span class="g">|1−2γ| = '+fmt(Math.abs(fac),2)+' &lt; 1 → shrinks every step</span>'
+                :Math.abs(fac)===1?'<span class="hl">|1−2γ| = 1 → bounces forever</span>'
+                :'<span class="r">|1−2γ| = '+fmt(Math.abs(fac),2)+' &gt; 1 → grows every step → diverges</span>';
+    $('#ssOut').innerHTML='step '+steps+':  x = '+fmt(x,4)+'   f = '+fmt(F(x),4)+'\n'+
+      'update: x ← (1−2γ)·x = ('+fmt(fac,2)+')·x\n'+regime+
+      (log.length?'\n'+log.slice(-4).join('\n'):'');
+  }
+  function step(){
+    const lr=getLr(), xn=x-lr*2*x;
+    if(adapt && F(xn)>F(x)){
+      log.push('<span class="r">worse ('+fmt(F(xn),2)+' &gt; '+fmt(F(x),2)+') → undo, γ '+fmt(lr,2)+' → '+fmt(lr/2,2)+'</span>');
+      setLr(Math.max(0.05,lr/2));
+    } else {
+      x=clamp(xn,-1e6,1e6);trail.push(x);if(trail.length>40)trail.shift();
+      log.push('kept: x = '+fmt(x,3)+'  f = '+fmt(F(x),3));
+    }
+    steps++;render();
+  }
+  $('#ssAdapt').addEventListener('click',function(){adapt=!adapt;
+    this.textContent='undo & halve: '+(adapt?'ON':'OFF');this.classList.toggle('active',adapt);render();});
+  $('#ssStep').addEventListener('click',step);
+  $('#ssRun').addEventListener('click',()=>{let n=0;const t=setInterval(()=>{step();if(++n>=12)clearInterval(t);},80);});
+  $('#ssReset').addEventListener('click',()=>{x=4;trail=[4];steps=0;log=[];render();});
+  render();
+});
+
+/* 06 exact line search on x^2 + 3y^2 with the 90-degree check */
+window.__demos.push(function(){
+  const c=$('#exCanvas'); if(!c)return;
+  const f=(x,y)=>x*x+3*y*y;
+  const dom=2.6;
+  let p={x:2,y:2}, trail=[{x:2,y:2}], steps=0, lastDir=null, lastDot=null, lastGam=null;
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=34;
+    const X=v=>pad+(v+dom)/(2*dom)*(W-2*pad), Y=v=>H-pad-(v+dom)/(2*dom)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    shadeField(ctx,f,-dom,dom,-dom,dom,pad,W,H,0.5);
+    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+    ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();
+    trail.forEach((t,i)=>{i?ctx.lineTo(X(t.x),Y(t.y)):ctx.moveTo(X(t.x),Y(t.y));});ctx.stroke();
+    ctx.strokeStyle='rgba(255,203,107,.95)';ctx.lineWidth=1.8;ctx.beginPath();
+    trail.forEach((t,i)=>{i?ctx.lineTo(X(t.x),Y(t.y)):ctx.moveTo(X(t.x),Y(t.y));});ctx.stroke();
+    for(let k=1;k<trail.length-1;k++){
+      ctx.fillStyle='#fff';ctx.font='bold 10px monospace';
+      ctx.fillText('90°',X(trail[k].x)+6,Y(trail[k].y)-6);
+    }
+    ctx.fillStyle='#fff';ctx.strokeStyle='#62e88a';ctx.lineWidth=2;
+    ctx.save();ctx.translate(X(0),Y(0));ctx.beginPath();
+    for(let k=0;k<10;k++){const r=k%2?4:9,a=Math.PI/5*k-Math.PI/2;ctx.lineTo(r*Math.cos(a),r*Math.sin(a));}
+    ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(X(p.x),Y(p.y),7,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function render(){
+    cv.redraw();
+    let s='step '+steps+':  (x, y) = ('+fmt(p.x,4)+', '+fmt(p.y,4)+')   f = '+fmt(f(p.x,p.y),4)+'\n';
+    const gam=(p.x*p.x+9*p.y*p.y)/(2*p.x*p.x+54*p.y*p.y||1);
+    s+='next γ = (x²+9y²)/(2x²+54y²) = <span class="hl">'+fmt(gam,4)+'</span>\n';
+    if(lastGam!==null) s+='last step used γ = '+fmt(lastGam,4)+(Math.abs(lastGam-5/28)<1e-3?' (= 5/28)':Math.abs(lastGam-5/12)<1e-3?' (= 5/12)':'')+'\n';
+    if(lastDot!==null) s+='90° check: (new ∇f)·(old direction) = <span class="g">'+fmt(lastDot,6)+'</span>  ✓ perpendicular';
+    else s+='<span class="muted">take a step to see the 90° check</span>';
+    $('#exOut').innerHTML=s;
+  }
+  function step(){
+    const g=[2*p.x,6*p.y];
+    const gam=(p.x*p.x+9*p.y*p.y)/(2*p.x*p.x+54*p.y*p.y);
+    const dir=[-g[0],-g[1]];
+    p={x:p.x+gam*dir[0],y:p.y+gam*dir[1]};
+    const gn=[2*p.x,6*p.y];
+    lastDot=gn[0]*dir[0]+gn[1]*dir[1];
+    lastDir=dir;lastGam=gam;
+    trail.push({...p});steps++;render();
+  }
+  $('#exStep').addEventListener('click',step);
+  $('#exRun').addEventListener('click',()=>{let n=0;const t=setInterval(()=>{step();if(++n>=6)clearInterval(t);},350);});
+  $('#exReset').addEventListener('click',()=>{p={x:2,y:2};trail=[{x:2,y:2}];steps=0;lastDot=null;lastGam=null;render();});
+  render();
+});
+
+/* 07 finite-difference lab */
+window.__demos.push(function(){
+  const c=$('#fdCanvas'); if(!c)return;
+  const host=$('#fdSliders'); host.innerHTML='';
+  const J=w=>w*w+6*w;
+  const w0=1, wmin=0.1, wmax=2.1;
+  let central=false;
+  const getD=makeSlider(host,{id:'fdD',label:'Δ (nudge)',min:'0.01',max:'0.8',step:'0.01',value:'0.4'},()=>render());
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=40, ymin=0, ymaxv=18;
+    const X=v=>pad+(v-wmin)/(wmax-wmin)*(W-2*pad), Y=v=>H-pad-(v-ymin)/(ymaxv-ymin)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#2a3a5c';ctx.lineWidth=2;ctx.beginPath();
+    for(let p2=pad;p2<=W-pad;p2++){const xx=wmin+(p2-pad)/(W-2*pad)*(wmax-wmin);
+      const yy=Y(J(xx));p2===pad?ctx.moveTo(p2,yy):ctx.lineTo(p2,yy);}
+    ctx.stroke();
+    ctx.strokeStyle='#9b8cff';ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.beginPath();
+    ctx.moveTo(X(0.35),Y(J(w0)+8*(0.35-w0)));ctx.lineTo(X(1.85),Y(J(w0)+8*(1.85-w0)));ctx.stroke();ctx.setLineDash([]);
+    const d=getD();
+    const a=central? w0-d/1 : w0, b=w0+d;
+    const wa=central? w0-d : w0;
+    const sec=central? (J(w0+d)-J(w0-d))/(2*d) : (J(w0+d)-J(w0))/d;
+    ctx.strokeStyle='#ffcb6b';ctx.lineWidth=2.4;ctx.beginPath();
+    ctx.moveTo(X(wa),Y(J(wa)));ctx.lineTo(X(b),Y(J(b)));ctx.stroke();
+    [[wa,J(wa)],[b,J(b)]].forEach(pt=>{ctx.fillStyle='#ffcb6b';ctx.beginPath();
+      ctx.arc(X(pt[0]),Y(pt[1]),5,0,7);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.stroke();});
+    ctx.fillStyle='#38f0d8';ctx.beginPath();ctx.arc(X(w0),Y(J(w0)),6,0,7);ctx.fill();
+    ctx.fillStyle='#93a4c8';ctx.font='11px monospace';
+    ctx.fillText('w='+w0,X(w0)-14,Y(J(w0))+18);
+    ctx.fillText('secant '+fmt(sec,3),X(1.28),Y(J(1.28))-12);
+    ctx.fillStyle='#9b8cff';ctx.fillText('tangent 8 (truth)',pad+8,pad+14);
+  });
+  function render(){
+    cv.redraw();
+    const d=getD();
+    const est=central? (J(w0+d)-J(w0-d))/(2*d) : (J(w0+d)-J(w0))/d;
+    $('#fdOut').innerHTML=(central?'central':'forward')+' difference at w = 1, Δ = '+fmt(d,2)+'\n'+
+      (central?'( J(1+Δ) − J(1−Δ) ) / 2Δ':'( J(1+Δ) − J(1) ) / Δ')+' = <span class="hl">'+fmt(est,4)+'</span>\n'+
+      'true slope 2w+6 = <span class="g">8</span>\n'+
+      'error = '+fmt(Math.abs(est-8),4)+(central?'  <span class="g">(curvature term cancelled)</span>':'  (= ½·curvature·Δ = Δ here)');
+  }
+  $('#fdCentral').addEventListener('click',function(){central=!central;
+    this.textContent='central difference: '+(central?'ON':'OFF');this.classList.toggle('active',central);render();});
+  render();
+});
+
+/* 08 learning-rate decay lab (schedule left, descent right) */
+window.__demos.push(function(){
+  const c=$('#dkCanvas'); if(!c)return;
+  const host=$('#dkSliders'); host.innerHTML='';
+  let sched='const', ran=false;
+  const getA0=makeSlider(host,{id:'dkA0',label:'α₀',min:'0.1',max:'1.2',step:'0.05',value:'1.0'},()=>{ran=false;render();});
+  const getK=makeSlider(host,{id:'dkK',label:'k (decay)',min:'0.05',max:'1',step:'0.05',value:'0.3'},()=>{ran=false;render();});
+  const T=30;
+  function alpha(t){const a0=getA0(),k=getK();
+    if(sched==='exp')return a0*Math.exp(-k*t);
+    if(sched==='inv')return a0/(1+k*t);
+    if(sched==='step')return a0*Math.pow(0.5,Math.floor(t/5));
+    return a0;}
+  function runTraj(){const xs=[4];let x=4;
+    for(let t=0;t<T;t++){x=x-alpha(t)*2*x;xs.push(clamp(x,-1e6,1e6));}
+    return xs;}
+  const cv=setupCanvas(c,function(ctx,W,H){
+    ctx.clearRect(0,0,W,H);
+    const mid=W*0.5, pad=36;
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('schedule αt',pad,20);ctx.fillText('descent xt on f=x²',mid+pad*0.6,20);
+    const a0=Math.max(getA0(),0.01);
+    const AX=t=>pad+t/T*(mid-2*pad), AY=v=>H-pad-(v/(a0*1.1))*(H-2*pad-16);
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(mid-pad,H-pad);ctx.stroke();
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2;ctx.beginPath();
+    for(let t=0;t<=T;t++){const p=[AX(t),AY(alpha(t))];t?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
+    ctx.stroke();
+    const xs=ran?runTraj():null;
+    const XX=t=>mid+pad*0.6+t/T*(W-mid-pad*1.6-8), XY=v=>H/2+8-(clamp(v,-5,5)/5)*(H/2-pad-10);
+    ctx.strokeStyle='rgba(120,150,210,.25)';ctx.beginPath();
+    ctx.moveTo(mid+pad*0.6,XY(0));ctx.lineTo(W-pad,XY(0));ctx.stroke();
+    ctx.fillStyle='#62e88a';ctx.beginPath();ctx.arc(W-pad,XY(0),4,0,7);ctx.fill();
+    ctx.fillStyle='#93a4c8';ctx.font='10px monospace';ctx.fillText('x*=0',mid+pad*0.6,XY(0)-6);
+    if(xs){
+      ctx.strokeStyle='rgba(255,203,107,.9)';ctx.lineWidth=1.7;ctx.beginPath();
+      xs.forEach((v,t)=>{const p=[XX(t),XY(v)];t?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});ctx.stroke();
+      xs.forEach((v,t)=>{ctx.fillStyle=Math.abs(v)<0.05?'#62e88a':'#ffcb6b';
+        ctx.beginPath();ctx.arc(XX(t),XY(v),2.6,0,7);ctx.fill();});
+    } else {
+      ctx.fillStyle='#64759c';ctx.font='11.5px monospace';
+      ctx.fillText('press "run 30 epochs"',mid+pad*0.9,H/2);
+    }
+    ctx.strokeStyle='rgba(120,150,210,.25)';ctx.strokeRect(mid-2,24,1,H-pad-20);
+  });
+  function render(){
+    cv.redraw();
+    const xs=ran?runTraj():null;
+    const names={const:'constant',exp:'exponential α₀e^(−kt)',inv:'inverse α₀/(1+kt)',step:'step decay (halve every 5)'};
+    let s='schedule: '+names[sched]+'   α₀ = '+fmt(getA0(),2)+(sched==='const'?'':'   k = '+fmt(getK(),2))+'\n';
+    if(xs){const last=xs[xs.length-1];
+      s+='after 30 epochs:  x = <span class="'+(Math.abs(last)<0.05?'g':'hl')+'">'+fmt(last,4)+'</span>   f = '+fmt(last*last,4)+'\n';
+      s+=Math.abs(last)<0.05?'<span class="g">landed — boldness early, tiptoes late</span>':
+         (sched==='const'&&getA0()>=0.95)?'<span class="r">orbiting the minimum — each step leaps across it</span>':
+         '<span class="hl">still travelling — try a different α₀ / k</span>';
+    } else s+='<span class="muted">run it, then compare schedules at the same α₀</span>';
+    $('#dkOut').innerHTML=s;
+  }
+  [['dkConst','const'],['dkExp','exp'],['dkInv','inv'],['dkStep','step']].forEach(([id,m])=>{
+    $('#'+id).addEventListener('click',function(){sched=m;ran=false;
+      $$('#dkConst,#dkExp,#dkInv,#dkStep').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');render();});
+  });
+  $('#dkGo').addEventListener('click',()=>{ran=true;render();});
+  $('#dkReset').addEventListener('click',()=>{ran=false;render();});
+  render();
+});
+
+/* 09 bold driver stepper */
+window.__demos.push(function(){
+  const c=$('#bdCanvas'); if(!c)return;
+  let x=4, al=0.9, fs=[16], als=[0.9], undos=[], log=[], auto=null;
+  const cv=setupCanvas(c,function(ctx,W,H){
+    ctx.clearRect(0,0,W,H);
+    const pad=40, midY=H*0.52, n=Math.max(fs.length,7);
+    const IX=i=>pad+i/(n-1)*(W-2*pad);
+    const FY=v=>midY-14-(clamp(v,0,17)/17)*(midY-pad-14);
+    const AY=v=>H-pad-(clamp(v,0,1.25)/1.25)*(H-midY-pad-6);
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('kept loss f(x)',pad,pad-10);ctx.fillText('rate α (+5% per win, −50% per crash)',pad,midY+8);
+    ctx.strokeStyle='rgba(120,150,210,.2)';
+    ctx.beginPath();ctx.moveTo(pad,FY(0));ctx.lineTo(W-pad,FY(0));ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,AY(0));ctx.lineTo(W-pad,AY(0));ctx.stroke();
+    undos.forEach(u=>{ctx.strokeStyle='rgba(255,107,129,.7)';ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(IX(u),pad);ctx.lineTo(IX(u),H-pad);ctx.stroke();ctx.setLineDash([]);});
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2;ctx.beginPath();
+    fs.forEach((v,i)=>{i?ctx.lineTo(IX(i),FY(v)):ctx.moveTo(IX(i),FY(v));});ctx.stroke();
+    fs.forEach((v,i)=>{ctx.fillStyle=v<0.05?'#62e88a':'#19c4ff';ctx.beginPath();ctx.arc(IX(i),FY(v),3.5,0,7);ctx.fill();});
+    ctx.strokeStyle='#ffcb6b';ctx.lineWidth=2;ctx.beginPath();
+    als.forEach((v,i)=>{i?ctx.lineTo(IX(i),AY(v)):ctx.moveTo(IX(i),AY(v));});ctx.stroke();
+    als.forEach((v,i)=>{ctx.fillStyle='#ffcb6b';ctx.beginPath();ctx.arc(IX(i),AY(v),3.5,0,7);ctx.fill();});
+  });
+  function render(){cv.redraw();
+    $('#bdOut').innerHTML=(log.length?log.slice(-5).join('\n'):'x₀ = 4, α₀ = 0.9 on f = x².  Press iterate.');}
+  function iterate(){
+    if(fs[fs.length-1]<0.001){setAuto(false);return;}
+    const it=fs.length, g=2*x, xn=x-al*g;
+    if(xn*xn<x*x){
+      log.push('it '+it+': try '+fmt(xn,3)+' → f '+fmt(xn*xn,3)+' <span class="g">better → keep, α×1.05 = '+fmt(al*1.05,3)+'</span>');
+      x=xn; al=al*1.05;
+    } else {
+      log.push('it '+it+': try '+fmt(xn,3)+' → f '+fmt(xn*xn,3)+' <span class="r">WORSE → undo, α halved to '+fmt(al*0.5,3)+'</span>');
+      undos.push(it); al=al*0.5;
+    }
+    fs.push(x*x); als.push(al); render();
+  }
+  function setAuto(on){const b=$('#bdAuto');
+    if(on){if(auto)return;b.textContent='⏸ stop';b.classList.add('active');
+      auto=setInterval(()=>{if(fs[fs.length-1]<0.001||fs.length>14){setAuto(false);return;}iterate();},600);}
+    else{clearInterval(auto);auto=null;b.innerHTML='auto &#9654;';b.classList.remove('active');}}
+  $('#bdStep').addEventListener('click',iterate);
+  $('#bdAuto').addEventListener('click',()=>setAuto(!auto));
+  $('#bdReset').addEventListener('click',()=>{setAuto(false);x=4;al=0.9;fs=[16];als=[0.9];undos=[];log=[];render();});
+  render();
+});
+
+/* 10 line-search lab: scrub h(alpha) + geometric sweep */
+window.__demos.push(function(){
+  const c=$('#lsCanvas'); if(!c)return;
+  const h=g=>4*(1-2*g)*(1-2*g)+12*(1-6*g)*(1-6*g);
+  const amax=0.55, hmax=52;
+  let scrub=null, swept=false;
+  const probes=[0.001,0.01,0.1,0.5];
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=42;
+    const X=v=>pad+v/amax*(W-2*pad), Y=v=>H-pad-(clamp(v,0,hmax)/hmax)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    if(swept){ctx.fillStyle='rgba(98,232,138,.08)';ctx.fillRect(X(0),pad,X(0.5)-X(0),H-2*pad);}
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.stroke();
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('α (step size)',W-pad-80,Y(0)+16);ctx.fillText('h(α)',pad-4,pad-8);
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2.4;ctx.beginPath();
+    for(let p2=pad;p2<=W-pad;p2++){const g=(p2-pad)/(W-2*pad)*amax;
+      const yy=Y(h(g));p2===pad?ctx.moveTo(p2,yy):ctx.lineTo(p2,yy);}
+    ctx.stroke();
+    const gstar=5/28;
+    ctx.fillStyle='#62e88a';ctx.beginPath();ctx.arc(X(gstar),Y(h(gstar)),5,0,7);ctx.fill();
+    ctx.fillStyle='#93a4c8';ctx.font='10px monospace';ctx.fillText('dip α*≈0.179',X(gstar)-28,Y(h(gstar))+18);
+    if(swept){probes.forEach(g=>{
+      ctx.fillStyle='#ffcb6b';ctx.beginPath();ctx.arc(X(g),Y(h(g)),5,0,7);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.fillStyle='#e7edf9';ctx.font='10px monospace';
+      ctx.fillText(fmt(h(g),1),X(g)-10,Y(h(g))-10);});}
+    if(scrub!==null){
+      ctx.strokeStyle='rgba(155,140,255,.7)';ctx.setLineDash([4,3]);ctx.beginPath();
+      ctx.moveTo(X(scrub),pad);ctx.lineTo(X(scrub),H-pad);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#38f0d8';ctx.beginPath();ctx.arc(X(scrub),Y(h(scrub)),6,0,7);ctx.fill();
+    }
+  });
+  function render(){
+    cv.redraw();
+    let s='h(α) = 4(1−2α)² + 12(1−6α)²   — the loss one step of size α would give\n';
+    if(scrub!==null)s+='scrub: α = '+fmt(scrub,3)+' → h = <span class="hl">'+fmt(h(scrub),3)+'</span>\n';
+    if(swept){s+='sweep: h(0.001)=15.8  h(0.01)=14.4  h(0.1)=4.5  h(0.5)=48\n';
+      s+='<span class="g">fall, fall, fall, RISE → the dip is trapped in [0, 0.5]</span>';}
+    else s+='<span class="muted">hover the curve; then sweep to bracket the dip</span>';
+    $('#lsOut').innerHTML=s;
+  }
+  c.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect(), pad=42, Wc=r.width;
+    scrub=clamp((e.clientX-r.left-pad)/(Wc-2*pad)*amax,0,amax);render();});
+  c.addEventListener('mouseleave',()=>{scrub=null;render();});
+  $('#lsSweep').addEventListener('click',()=>{swept=true;render();});
+  $('#lsReset').addEventListener('click',()=>{swept=false;scrub=null;render();});
+  render();
+});
+
+/* 11 binary search on the bracket */
+window.__demos.push(function(){
+  const c=$('#bsCanvas'); if(!c)return;
+  const h=g=>4*(1-2*g)*(1-2*g)+12*(1-6*g)*(1-6*g);
+  const amax=0.55, hmax=52, gstar=5/28;
+  let a=0,b=0.5,dropped=[],log=[],round=0;
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=42;
+    const X=v=>pad+v/amax*(W-2*pad), Y=v=>H-pad-(clamp(v,0,hmax)/hmax)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    dropped.forEach(d=>{ctx.fillStyle='rgba(255,107,129,.13)';
+      ctx.fillRect(X(d[0]),pad,X(d[1])-X(d[0]),H-2*pad);});
+    ctx.fillStyle='rgba(98,232,138,.10)';
+    ctx.fillRect(X(a),pad,X(b)-X(a),H-2*pad);
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.stroke();
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2.2;ctx.beginPath();
+    for(let p2=pad;p2<=W-pad;p2++){const g=(p2-pad)/(W-2*pad)*amax;
+      const yy=Y(h(g));p2===pad?ctx.moveTo(p2,yy):ctx.lineTo(p2,yy);}
+    ctx.stroke();
+    [[a,'a'],[b,'b']].forEach(([v,lab])=>{
+      ctx.strokeStyle='rgba(98,232,138,.8)';ctx.beginPath();ctx.moveTo(X(v),pad);ctx.lineTo(X(v),H-pad);ctx.stroke();
+      ctx.fillStyle='#62e88a';ctx.font='bold 11px monospace';ctx.fillText(lab+'='+fmt(v,4),X(v)-16,pad-6);});
+    ctx.fillStyle='#ffcb6b';ctx.beginPath();ctx.arc(X(gstar),Y(h(gstar)),5,0,7);ctx.fill();
+    ctx.fillStyle='#93a4c8';ctx.font='10px monospace';ctx.fillText('the dip',X(gstar)-16,Y(h(gstar))+18);
+  });
+  function render(){cv.redraw();
+    $('#bsOut').innerHTML=(log.length?log.slice(-4).join('\n')+'\n':'bracket [0, 0.5]; the dip must be inside.\n')+
+      'width = <span class="hl">'+fmt(b-a,5)+'</span>'+(round?'  after '+round+' round(s), ÷'+Math.pow(2,round):'');}
+  $('#bsProbe').addEventListener('click',()=>{
+    const mid=(a+b)/2, rising=h(mid+1e-6)>h(mid);
+    if(rising){dropped.push([mid,b]);log.push('mid '+fmt(mid,5)+': h='+fmt(h(mid),3)+' <span class="hl">rising</span> → dip is LEFT → ['+fmt(a,4)+', '+fmt(mid,4)+']');b=mid;}
+    else{dropped.push([a,mid]);log.push('mid '+fmt(mid,5)+': h='+fmt(h(mid),3)+' <span class="hl">falling</span> → dip is RIGHT → ['+fmt(mid,4)+', '+fmt(b,4)+']');a=mid;}
+    round++;render();});
+  $('#bsReset').addEventListener('click',()=>{a=0;b=0.5;dropped=[];log=[];round=0;render();});
+  render();
+});
+
+/* 12 golden-section rounds */
+window.__demos.push(function(){
+  const c=$('#gsCanvas'); if(!c)return;
+  const h=g=>4*(1-2*g)*(1-2*g)+12*(1-6*g)*(1-6*g);
+  const amax=0.55, hmax=52, gstar=5/28;
+  let a=0,b=0.5,dropped=[],log=[],round=0;
+  const pts=()=>[a,a+(b-a)/3,a+2*(b-a)/3,b];
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=42;
+    const X=v=>pad+v/amax*(W-2*pad), Y=v=>H-pad-(clamp(v,0,hmax)/hmax)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    dropped.forEach(d=>{ctx.fillStyle='rgba(255,107,129,.13)';
+      ctx.fillRect(X(d[0]),pad,X(d[1])-X(d[0]),H-2*pad);});
+    ctx.fillStyle='rgba(98,232,138,.10)';ctx.fillRect(X(a),pad,X(b)-X(a),H-2*pad);
+    ctx.strokeStyle='rgba(120,150,210,.2)';ctx.beginPath();ctx.moveTo(pad,Y(0));ctx.lineTo(W-pad,Y(0));ctx.stroke();
+    ctx.strokeStyle='#19c4ff';ctx.lineWidth=2.2;ctx.beginPath();
+    for(let p2=pad;p2<=W-pad;p2++){const g=(p2-pad)/(W-2*pad)*amax;
+      const yy=Y(h(g));p2===pad?ctx.moveTo(p2,yy):ctx.lineTo(p2,yy);}
+    ctx.stroke();
+    const P=pts(), labs=['a','m1','m2','b'];
+    let minI=0;P.forEach((v,i)=>{if(h(v)<h(P[minI]))minI=i;});
+    P.forEach((v,i)=>{
+      ctx.strokeStyle='rgba(155,140,255,.55)';ctx.setLineDash([3,3]);ctx.beginPath();
+      ctx.moveTo(X(v),pad);ctx.lineTo(X(v),H-pad);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=i===minI?'#62e88a':'#ffcb6b';ctx.beginPath();ctx.arc(X(v),Y(h(v)),5.5,0,7);ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.fillStyle='#e7edf9';ctx.font='10px monospace';
+      ctx.fillText(labs[i]+' '+fmt(h(v),1),X(v)-14,pad+12+(i%2)*12);});
+    ctx.fillStyle='#93a4c8';ctx.font='10px monospace';ctx.fillText('dip α*',X(gstar)-12,Y(h(gstar))+18);
+  });
+  function render(){cv.redraw();
+    $('#gsOut').innerHTML=(log.length?log.slice(-4).join('\n')+'\n':'four points: a, m1, m2, b on [0, 0.5].\n')+
+      'bracket ['+fmt(a,3)+', '+fmt(b,3)+']   width <span class="hl">'+fmt(b-a,4)+'</span>'+(round?'  after '+round+' round(s)':'');}
+  $('#gsRound').addEventListener('click',()=>{
+    const P=pts(), labs=['a','m1','m2','b'];
+    let minI=0;P.forEach((v,i)=>{if(h(v)<h(P[minI]))minI=i;});
+    let na=a,nb=b,rule='';
+    if(minI===0){rule='smallest at a → drop (m1, b]';dropped.push([P[1],b]);nb=P[1];}
+    else if(minI===3){rule='smallest at b → drop [a, m2)';dropped.push([a,P[2]]);na=P[2];}
+    else if(minI===1){rule='smallest at m1 → drop (m2, b]';dropped.push([P[2],b]);nb=P[2];}
+    else{rule='smallest at m2 → drop [a, m1)';dropped.push([a,P[1]]);na=P[1];}
+    log.push('round '+(round+1)+': min at <span class="g">'+labs[minI]+'</span> (h='+fmt(h(P[minI]),3)+') — '+rule);
+    a=na;b=nb;round++;render();});
+  $('#gsReset').addEventListener('click',()=>{a=0;b=0.5;dropped=[];log=[];round=0;render();});
+  render();
+});
+
+/* 13 cost model: total work = steps x evals per step */
+window.__demos.push(function(){
+  const c=$('#costCanvas'); if(!c)return;
+  const host=$('#costSliders'); host.innerHTML='';
+  const getSteps=makeSlider(host,{id:'cSteps',label:'exact: steps',min:'20',max:'120',step:'5',value:'40'},()=>render());
+  const getEv=makeSlider(host,{id:'cEv',label:'exact: evals/step',min:'2',max:'20',step:'1',value:'12'},()=>render());
+  const cv=setupCanvas(c,function(ctx,W,H){
+    ctx.clearRect(0,0,W,H);
+    const bars=[
+      {n:'fixed step',sub:'400 × 1',v:400,col:'#19c4ff'},
+      {n:'Armijo',sub:'150 × 2',v:300,col:'#9b8cff'},
+      {n:'exact search',sub:getSteps()+' × '+getEv(),v:getSteps()*getEv(),col:'#ffcb6b'}];
+    const vmax=Math.max(600,...bars.map(b=>b.v));
+    const pad=44, bw=(W-2*pad)/bars.length;
+    let winner=0;bars.forEach((b,i)=>{if(b.v<bars[winner].v)winner=i;});
+    bars.forEach((b,i)=>{
+      const x=pad+i*bw+bw*0.16, w=bw*0.68, hpx=(b.v/vmax)*(H-2*pad-16);
+      ctx.fillStyle=i===winner?'#62e88a':b.col;
+      ctx.fillRect(x,H-pad-hpx,w,hpx);
+      ctx.fillStyle='#fff';ctx.font='bold 12px monospace';ctx.textAlign='center';
+      ctx.fillText(String(b.v),x+w/2,H-pad-hpx-8);
+      ctx.fillStyle='#93a4c8';ctx.font='11px sans-serif';
+      ctx.fillText(b.n,x+w/2,H-pad+16);
+      ctx.font='10px monospace';ctx.fillStyle='#64759c';
+      ctx.fillText(b.sub,x+w/2,H-pad+30);
+      if(i===winner){ctx.fillStyle='#62e88a';ctx.font='bold 10px monospace';
+        ctx.fillText('WINNER',x+w/2,H-pad-hpx-22);}
+      ctx.textAlign='left';});
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('total evaluations (lower is better)',pad,26);
+  });
+  function render(){cv.redraw();
+    const tot=getSteps()*getEv();
+    $('#costOut').innerHTML='exact line search: '+getSteps()+' steps × '+getEv()+' evals = <span class="hl">'+tot+'</span>\n'+
+      'fixed step: 400 × 1 = 400    Armijo: 150 × 2 = 300\n'+
+      (tot<300?'<span class="g">exact search wins — few, cheap, precise steps</span>':
+       tot<=400?'<span class="hl">exact beats fixed-step but Armijo still wins</span>':
+       '<span class="r">exact search loses — its per-step bill is too high</span>');}
+  render();
+});
+
+/* 14 SGD on the chapter-01 loss */
+window.__demos.push(function(){
+  const c=$('#sgCanvas'); if(!c)return;
+  const XS=[1,2,3,4], YS=[3.1,4.9,7.3,9.1];
+  const L=(a,b)=>{let s=0;for(let i=0;i<4;i++){const g=YS[i]-(a*XS[i]+b);s+=g*g;}return s;};
+  const amin=-0.5,amaxv=4,bmin=-1.5,bmax=3.5;
+  let seed=7, batch=1, decay=true, w=[0,0], trail=[[0,0]], t=0, lastInfo='';
+  function rng(){seed|=0;seed=seed+0x6D2B79F5|0;let q=Math.imul(seed^seed>>>15,1|seed);
+    q=q+Math.imul(q^q>>>7,61|q)^q;return((q^q>>>14)>>>0)/4294967296;}
+  function gradOf(idx){const g=[0,0];
+    idx.forEach(i=>{const r=(w[0]*XS[i]+w[1])-YS[i];g[0]+=2*r*XS[i];g[1]+=2*r;});
+    const sc=4/idx.length;return [g[0]*sc,g[1]*sc];}
+  const cv=setupCanvas(c,function(ctx,W,H){
+    const pad=36;
+    const X=v=>pad+(v-amin)/(amaxv-amin)*(W-2*pad), Y=v=>H-pad-(v-bmin)/(bmax-bmin)*(H-2*pad);
+    ctx.clearRect(0,0,W,H);
+    shadeField(ctx,L,amin,amaxv,bmin,bmax,pad,W,H,0.4);
+    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+    ctx.fillStyle='#64759c';ctx.font='11px monospace';
+    ctx.fillText('a (slope)',W-pad-64,H-pad+15);ctx.fillText('b',pad-16,pad+10);
+    ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=3.6;ctx.lineCap='round';ctx.beginPath();
+    trail.forEach((p,i)=>{const px=X(clamp(p[0],amin,amaxv)),py=Y(clamp(p[1],bmin,bmax));
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    ctx.strokeStyle='rgba(255,203,107,.95)';ctx.lineWidth=1.7;ctx.beginPath();
+    trail.forEach((p,i)=>{const px=X(clamp(p[0],amin,amaxv)),py=Y(clamp(p[1],bmin,bmax));
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+    ctx.fillStyle='#fff';ctx.strokeStyle='#62e88a';ctx.lineWidth=2;
+    ctx.save();ctx.translate(X(2.04),Y(1.0));ctx.beginPath();
+    for(let k=0;k<10;k++){const r=k%2?4:9,ang=Math.PI/5*k-Math.PI/2;ctx.lineTo(r*Math.cos(ang),r*Math.sin(ang));}
+    ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle='#38f0d8';ctx.shadowColor='#38f0d8';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(X(clamp(w[0],amin,amaxv)),Y(clamp(w[1],bmin,bmax)),6.5,0,7);ctx.fill();ctx.shadowBlur=0;
+  });
+  function render(){
+    cv.redraw();
+    $('#sgOut').innerHTML='batch '+batch+' · rate '+(decay?'0.016/(1+0.06t) decaying':'0.016 constant')+'\n'+
+      'step '+t+':  (a, b) = ('+fmt(w[0],3)+', '+fmt(w[1],3)+')   L = <span class="hl">'+fmt(L(w[0],w[1]),3)+'</span>\n'+
+      (lastInfo||'<span class="muted">press step — the console shows which points were tasted</span>')+'\n'+
+      'target: star at (2.04, 1.00), L = 0.072';
+  }
+  function step(){
+    let idx=[];
+    if(batch===4)idx=[0,1,2,3];
+    else{const pool=[0,1,2,3];
+      for(let k=0;k<batch;k++)idx.push(pool.splice(Math.floor(rng()*pool.length),1)[0]);}
+    const g=gradOf(idx), full=gradOf([0,1,2,3]);
+    const dot=g[0]*full[0]+g[1]*full[1];
+    const ang=Math.acos(clamp(dot/((Math.hypot(g[0],g[1])*Math.hypot(full[0],full[1]))||1),-1,1))*180/Math.PI;
+    const lr=decay?0.016/(1+0.06*t):0.016;
+    w=[w[0]-lr*g[0],w[1]-lr*g[1]];
+    t++;trail.push([...w]);if(trail.length>90)trail.shift();
+    lastInfo='tasted point(s) {'+idx.map(i=>i+1).join(',')+'}  → estimate off the true downhill by <span class="hl">'+fmt(ang,1)+'°</span>';
+    render();
+  }
+  function setBatch(n,btn){batch=n;
+    $$('#sgB1,#sgB2,#sgB4').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
+  $('#sgB1').addEventListener('click',function(){setBatch(1,this);});
+  $('#sgB2').addEventListener('click',function(){setBatch(2,this);});
+  $('#sgB4').addEventListener('click',function(){setBatch(4,this);});
+  $('#sgDecay').addEventListener('click',function(){decay=!decay;
+    this.textContent='decaying rate: '+(decay?'ON':'OFF');this.classList.toggle('active',decay);render();});
+  $('#sgStep').addEventListener('click',step);
+  $('#sgRun').addEventListener('click',()=>{let n=0;const tm=setInterval(()=>{step();if(++n>=40)clearInterval(tm);},45);});
+  $('#sgShuffle').addEventListener('click',()=>{seed=Math.floor(Math.random()*1e9);w=[0,0];trail=[[0,0]];t=0;lastInfo='';render();});
+  $('#sgReset').addEventListener('click',()=>{w=[0,0];trail=[[0,0]];t=0;lastInfo='';render();});
+  render();
+});
+
+/* boot */
+window.addEventListener('load',()=>{
+  runDemos(); initTheme(); initReveal(); initStory(); initRecall(); onScroll();
+  if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise();
+});
+</script>
+</body>
+</html>

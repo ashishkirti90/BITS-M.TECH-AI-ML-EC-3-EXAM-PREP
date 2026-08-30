@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradient Descent on a Bowl — f(x,y) = x² + y²</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,400&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+  MathJax = { tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]}, svg:{fontCache:'global'} };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+<style>
+  :root{
+    --navy:#10203f;--navy-deep:#0a1730;--ink:#1a2438;--steel:#3f5a86;--steel-soft:#6b82a8;
+    --gold:#b8842f;--gold-bright:#d9a441;--paper:#f6f3ec;--card:#fbf9f4;--rule:#d8cfbd;
+    --crimson:#9c3a2e;--teal:#2f6e6a;
+    --shadow:0 1px 0 rgba(255,255,255,.6),0 18px 40px -24px rgba(16,32,63,.5);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1100px 560px at 88% -10%, rgba(184,132,47,.07), transparent 60%),
+      radial-gradient(820px 460px at -5% 4%, rgba(63,90,134,.08), transparent 55%),var(--paper);
+    color:var(--ink);font-family:"Newsreader",Georgia,serif;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:0 24px}
+  header.mast{background:linear-gradient(180deg,var(--navy),var(--navy-deep));color:var(--paper);
+    border-bottom:3px solid var(--gold);position:relative;overflow:hidden}
+  header.mast::before{content:"";position:absolute;inset:0;
+    background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 42px),
+      repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 42px);
+    mask:radial-gradient(640px 340px at 72% 30%,#000,transparent 75%)}
+  .mast .wrap{padding:46px 24px 40px;position:relative}
+  .kicker{font-family:"Spline Sans Mono",monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--gold-bright);margin:0 0 14px}
+  h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(30px,5.5vw,52px);line-height:1;margin:0;letter-spacing:-.015em}
+  h1 em{font-style:italic;color:var(--gold-bright);font-weight:400}
+  .sub{color:#c7d2e6;margin:16px 0 0;font-style:italic;font-size:19px;max-width:640px}
+  section{padding:40px 0 4px}
+  .eyebrow{font-family:"Spline Sans Mono",monospace;font-size:12px;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--gold);display:flex;align-items:center;gap:12px;margin:0 0 12px}
+  .eyebrow::before{content:"";width:28px;height:2px;background:var(--gold)}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(24px,3.6vw,32px);margin:0 0 6px;color:var(--navy);letter-spacing:-.01em}
+  p{margin:12px 0}
+  .mathbox{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:4px 18px;margin:16px 0;overflow-x:auto}
+  .lab{background:linear-gradient(180deg,#fbf9f4,#f3eee3);border:1px solid var(--rule);border-radius:8px;
+    padding:22px;margin:26px 0;box-shadow:var(--shadow);position:relative}
+  .lab::before{content:"INTERACTIVE";position:absolute;top:-10px;left:20px;background:var(--navy);color:var(--gold-bright);
+    font-family:"Spline Sans Mono",monospace;font-size:10px;letter-spacing:.22em;padding:3px 10px;border-radius:3px}
+  .lab h3{font-family:"Fraunces",serif;font-weight:600;font-size:20px;color:var(--navy);margin:6px 0 4px}
+  .lab .cap{font-size:15px;color:var(--steel);font-style:italic;margin:0 0 14px}
+  canvas{display:block;width:100%;border-radius:6px;background:#fcfbf8;border:1px solid var(--rule);touch-action:none;cursor:crosshair}
+  canvas.rot{cursor:grab}
+  canvas.rot:active{cursor:grabbing}
+  .controls{display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-end;margin-top:16px}
+  .ctrl{display:flex;flex-direction:column;gap:5px}
+  .ctrl label{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--steel);text-transform:uppercase}
+  .ctrl label b{color:var(--crimson)}
+  input[type=number]{font-family:"Spline Sans Mono",monospace;font-size:16px;width:88px;padding:7px 9px;border:1px solid var(--rule);
+    border-radius:5px;background:#fff;color:var(--navy)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:170px;background:var(--rule);border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);
+    border:2px solid var(--paper);box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--paper);cursor:pointer}
+  .btn{font-family:"Spline Sans Mono",monospace;font-size:12px;letter-spacing:.06em;background:var(--navy);color:var(--paper);
+    border:none;padding:10px 15px;border-radius:5px;cursor:pointer;text-transform:uppercase;transition:.15s}
+  .btn:hover{background:var(--steel)}
+  .btn.ghost{background:transparent;color:var(--navy);border:1px solid var(--steel)}
+  .btn.ghost:hover{background:#efeae0}
+  .readout{font-family:"Spline Sans Mono",monospace;font-size:13.5px;color:var(--navy);background:#fff;border:1px solid var(--rule);
+    border-radius:5px;padding:10px 14px;margin-top:14px;display:flex;gap:18px 26px;flex-wrap:wrap;line-height:1.4}
+  .readout b{color:var(--crimson)}
+  .readout .g{color:var(--gold)}
+  .status{font-family:"Spline Sans Mono",monospace;font-size:13px;color:var(--teal);margin-top:10px}
+  .legend{display:flex;gap:20px;flex-wrap:wrap;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--steel);margin-top:12px}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .sw{width:22px;height:0;border-top:3px solid}
+  .callout{background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--gold);border-radius:4px;
+    padding:16px 20px;margin:22px 0;box-shadow:var(--shadow)}
+  .callout .tag{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:16px;background:var(--card);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+  th{background:var(--navy);color:var(--paper);font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:400;text-align:left;padding:10px 14px}
+  td{padding:10px 14px;border-top:1px solid var(--rule)}
+  td:first-child{font-family:"Spline Sans Mono",monospace;color:var(--crimson);white-space:nowrap}
+  footer{background:var(--navy);color:#bccbe2;margin-top:50px;padding:30px 0;border-top:3px solid var(--gold)}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center}
+  footer .brand{font-family:"Fraunces",serif;font-weight:900;color:var(--paper);font-size:20px}
+  footer small{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.08em;color:#7e93b8}
+  @media(max-width:560px){.readout{font-size:12px}}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap">
+    <p class="kicker">MFML · Optimization · Live demo</p>
+    <h1>Gradient Descent<br>on a <em>Bowl</em></h1>
+    <p class="sub">$f(x,y)=x^2+y^2$. Drag the point, watch the gradient turn. Then let it roll downhill to the minimum.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">The setup</p>
+    <h2>One function, one gradient, one rule.</h2>
+    <p>Our landscape is the simplest bowl there is — a paraboloid that dips to zero at the origin and climbs in every direction. Its gradient (the compass pointing steepest <em>uphill</em>) is just twice the position vector:</p>
+    <div class="mathbox">
+      $$f(x,y)=x^2+y^2,\qquad \nabla f=\Big[\tfrac{\partial f}{\partial x},\ \tfrac{\partial f}{\partial y}\Big]=[\,2x,\ 2y\,].$$
+    </div>
+    <p>So at the starting point $(2,3)$ the gradient is $[\,2(2),\,2(3)\,]=[\,4,\,6\,]$ — it points away from the centre, with magnitude $\sqrt{4^2+6^2}=\sqrt{52}\approx 7.21$. To <em>descend</em>, we step the opposite way, scaled by a learning rate $\eta$:</p>
+    <div class="mathbox">
+      $$\begin{bmatrix}x\\y\end{bmatrix}\ \leftarrow\ \begin{bmatrix}x\\y\end{bmatrix}-\eta\,\nabla f=\begin{bmatrix}x\\y\end{bmatrix}-\eta\begin{bmatrix}2x\\2y\end{bmatrix}=(1-2\eta)\begin{bmatrix}x\\y\end{bmatrix}.$$
+    </div>
+    <p>That last form is a gift: each step just multiplies your position by $(1-2\eta)$. You can literally predict the behaviour from that one number — and the demo lets you feel it.</p>
+  </div>
+</section>
+
+<!-- ============ 2D ============ -->
+<section>
+  <div class="wrap">
+    <div class="lab">
+      <h3>Input space — the gradient lives here</h3>
+      <p class="cap">Top-down view. The rings are level curves (equal height). Drag the point anywhere — or type exact coordinates — and the gold gradient vector recomputes instantly. Notice it always points straight out, perpendicular to the ring it sits on.</p>
+      <canvas id="cv2d" height="440"></canvas>
+      <div class="controls">
+        <div class="ctrl"><label>x&nbsp;coordinate</label><input type="number" id="in-x" value="2" step="0.1" min="-4.5" max="4.5"></div>
+        <div class="ctrl"><label>y&nbsp;coordinate</label><input type="number" id="in-y" value="3" step="0.1" min="-4.5" max="4.5"></div>
+        <div class="ctrl">
+          <label>learning rate&nbsp;$\eta$ = <b><span id="lr-val">0.10</span></b></label>
+          <input type="range" id="r-lr" min="0.01" max="1.10" step="0.01" value="0.10">
+        </div>
+        <button class="btn" id="b-step">Step ×1</button>
+        <button class="btn" id="b-run">▶ Run descent</button>
+        <button class="btn ghost" id="b-reset">Reset</button>
+      </div>
+      <div class="readout">
+        <span>point&nbsp; <b id="o-pt">(2.00, 3.00)</b></span>
+        <span class="g">∇f = <b class="g" id="o-grad">[4.00, 6.00]</b></span>
+        <span>‖∇f‖ = <b id="o-mag">7.21</b></span>
+        <span>f = <b id="o-f">13.00</b></span>
+        <span>step <b id="o-it">0</b></span>
+      </div>
+      <div class="status" id="o-status">Drag the point, or press Run.</div>
+      <div class="legend">
+        <span><span class="sw" style="border-color:var(--gold)"></span> ∇f (steepest ascent)</span>
+        <span><span class="sw" style="border-color:var(--steel);border-top-style:dashed"></span> −∇f (descent step)</span>
+        <span><span class="sw" style="border-color:var(--crimson)"></span> current point &amp; path</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3D ============ -->
+<section>
+  <div class="wrap">
+    <div class="lab">
+      <h3>The bowl itself — the loss surface</h3>
+      <p class="cap">The same function as a 3D surface, $z=x^2+y^2$. The red ball sits on the surface above your chosen point; the gold trail is the descent path so far. <strong>Drag to rotate</strong> the view. Everything stays in sync with the panel above.</p>
+      <canvas id="cv3d" class="rot" height="440"></canvas>
+      <div class="controls">
+        <button class="btn ghost" id="b-spin">⟳ Auto-rotate</button>
+        <span class="status" style="margin:0">Tip: the ball glides to the bottom of the bowl exactly when the point above reaches the centre.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ learning rate notes ============ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">What to try</p>
+    <h2>The learning rate is the whole story.</h2>
+    <p>Because every step multiplies your position by $(1-2\eta)$, you can predict the fate of the descent before you press Run. Set the point back to $(2,3)$ and try each regime:</p>
+    <table>
+      <tr><th>η</th><th>factor (1−2η)</th><th>what you'll see</th></tr>
+      <tr><td>0.10</td><td>0.80</td><td>Smooth, steady glide into the centre. The textbook case.</td></tr>
+      <tr><td>0.50</td><td>0.00</td><td>One single step lands exactly on the minimum. Perfectly tuned.</td></tr>
+      <tr><td>0.80</td><td>−0.60</td><td>Overshoots and zig-zags through the centre, spiralling in.</td></tr>
+      <tr><td>1.00</td><td>−1.00</td><td>Bounces between two points forever — never converges, never diverges.</td></tr>
+      <tr><td>&gt; 1.00</td><td>|factor| &gt; 1</td><td>Each step lands farther out. The path explodes off the bowl.</td></tr>
+    </table>
+    <div class="callout">
+      <div class="tag">The teaching moment</div>
+      <p>Watch the gold gradient vector as the ball nears the centre: it <em>shrinks toward zero</em>. That's the signal that you've arrived — flat ground, $\nabla f = \mathbf{0}$, nowhere left to step. In a real model, that's the moment training stops making progress.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="brand">MFML · Gradient Descent</span>
+    <small>f(x,y) = x² + y² · live gradient + 3D bowl</small>
+  </div>
+</footer>
+
+<script>
+/* ---------- shared state ---------- */
+const NAVY='#10203f',GOLD='#b8842f',GOLDB='#d9a441',CRIM='#9c3a2e',STEEL='#3f5a86',
+      STEELS='#6b82a8',RULE='#d8cfbd',TEAL='#2f6e6a',PAPER='#fcfbf8';
+let pt={x:2,y:3}, start={x:2,y:3}, path=[{x:2,y:3}], eta=0.10, iter=0, running=null;
+let az=-0.9, beta=0.95, spin=null;
+
+const f=(x,y)=>x*x+y*y;
+const grad=(x,y)=>[2*x,2*y];
+
+function fit(cv){
+  const ratio=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight||440;
+  cv.width=w*ratio; cv.height=h*ratio;
+  const ctx=cv.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0);
+  return {ctx,w,h};
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+/* ---------- readout + sync ---------- */
+function updateReadout(){
+  const [gx,gy]=grad(pt.x,pt.y);
+  document.getElementById('o-pt').textContent=`(${pt.x.toFixed(2)}, ${pt.y.toFixed(2)})`;
+  document.getElementById('o-grad').textContent=`[${gx.toFixed(2)}, ${gy.toFixed(2)}]`;
+  document.getElementById('o-mag').textContent=Math.hypot(gx,gy).toFixed(2);
+  document.getElementById('o-f').textContent=f(pt.x,pt.y).toFixed(2);
+  document.getElementById('o-it').textContent=iter;
+}
+function syncInputs(){
+  document.getElementById('in-x').value=pt.x.toFixed(2);
+  document.getElementById('in-y').value=pt.y.toFixed(2);
+}
+function redraw(){draw2d();draw3d();updateReadout();}
+
+/* =========================================================
+   2D — input space
+   ========================================================= */
+const cv2=document.getElementById('cv2d');
+const SPAN=9.2;
+function draw2d(){
+  const {ctx,w,h}=fit(cv2);
+  ctx.clearRect(0,0,w,h);
+  const s=Math.min(w,h)/SPAN;
+  const X=x=>w/2+x*s, Y=y=>h/2-y*s;
+  // faint square grid
+  ctx.strokeStyle='#ece5d6';ctx.lineWidth=1;
+  for(let g=-4;g<=4;g++){ctx.beginPath();ctx.moveTo(X(g),0);ctx.lineTo(X(g),h);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,Y(g));ctx.lineTo(w,Y(g));ctx.stroke();}
+  // contour rings (level curves) - circles radius sqrt(c)
+  ctx.lineWidth=1.4;
+  [0.75,1.5,2.25,3,3.75,4.5].forEach(r=>{
+    ctx.strokeStyle='rgba(63,90,134,0.35)';
+    ctx.beginPath();ctx.arc(X(0),Y(0),r*s,0,7);ctx.stroke();
+  });
+  // highlighted level curve through current point
+  const rp=Math.hypot(pt.x,pt.y);
+  if(rp>0.02){
+    ctx.strokeStyle='rgba(47,110,106,0.85)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(X(0),Y(0),rp*s,0,7);ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle=RULE;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(w,Y(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(X(0),0);ctx.lineTo(X(0),h);ctx.stroke();
+  // minimum marker
+  ctx.fillStyle=TEAL;ctx.beginPath();ctx.arc(X(0),Y(0),4,0,7);ctx.fill();
+  ctx.fillStyle=TEAL;ctx.font='600 11px "Spline Sans Mono",monospace';ctx.fillText('min',X(0)+7,Y(0)-7);
+  // path
+  if(path.length>1){
+    ctx.strokeStyle=GOLD;ctx.lineWidth=2;ctx.beginPath();
+    path.forEach((p,i)=>{i?ctx.lineTo(X(p.x),Y(p.y)):ctx.moveTo(X(p.x),Y(p.y));});ctx.stroke();
+    ctx.fillStyle=GOLDB;path.forEach(p=>{ctx.beginPath();ctx.arc(X(p.x),Y(p.y),3,0,7);ctx.fill();});
+  }
+  const [gx,gy]=grad(pt.x,pt.y);
+  // arrow scaling: cap visual length
+  const aScale=0.30, maxLen=3.0;
+  function arrow(vx,vy,col,dash,label){
+    let lx=vx*aScale, ly=vy*aScale;
+    const L=Math.hypot(lx,ly);
+    if(L>maxLen){lx*=maxLen/L;ly*=maxLen/L;}
+    const ex=pt.x+lx, ey=pt.y+ly;
+    ctx.strokeStyle=col;ctx.lineWidth=3.5;ctx.setLineDash(dash?[7,5]:[]);
+    ctx.beginPath();ctx.moveTo(X(pt.x),Y(pt.y));ctx.lineTo(X(ex),Y(ey));ctx.stroke();ctx.setLineDash([]);
+    const ang=Math.atan2(Y(ey)-Y(pt.y),X(ex)-X(pt.x));
+    ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(X(ex),Y(ey));
+    ctx.lineTo(X(ex)-13*Math.cos(ang-0.4),Y(ey)-13*Math.sin(ang-0.4));
+    ctx.lineTo(X(ex)-13*Math.cos(ang+0.4),Y(ey)-13*Math.sin(ang+0.4));
+    ctx.closePath();ctx.fill();
+    if(label){ctx.fillStyle=col;ctx.font='600 12px "Spline Sans Mono",monospace';ctx.fillText(label,X(ex)+6,Y(ey)+(ly>=0?-6:14));}
+  }
+  // descent (steel dashed) then ascent (gold) on top
+  arrow(-gx,-gy,STEEL,true,null);
+  arrow(gx,gy,GOLD,false,'∇f');
+  // current point
+  ctx.fillStyle=CRIM;ctx.beginPath();ctx.arc(X(pt.x),Y(pt.y),7,0,7);ctx.fill();
+  ctx.strokeStyle=PAPER;ctx.lineWidth=2.5;ctx.stroke();
+}
+
+/* drag + click on 2D */
+function pointFromEvent(e){
+  const r=cv2.getBoundingClientRect();
+  const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  const s=Math.min(r.width,r.height)/SPAN;
+  let x=(cx-r.width/2)/s, y=-(cy-r.height/2)/s;
+  pt.x=clamp(x,-4.5,4.5); pt.y=clamp(y,-4.5,4.5);
+  start={x:pt.x,y:pt.y}; path=[{x:pt.x,y:pt.y}]; iter=0;
+  setStatus('Gradient at this point: ∇f = ['+(2*pt.x).toFixed(2)+', '+(2*pt.y).toFixed(2)+'].');
+  syncInputs(); redraw();
+}
+let drag2=false;
+cv2.addEventListener('mousedown',e=>{stopRun();drag2=true;pointFromEvent(e);});
+cv2.addEventListener('mousemove',e=>{if(drag2)pointFromEvent(e);});
+window.addEventListener('mouseup',()=>drag2=false);
+cv2.addEventListener('touchstart',e=>{stopRun();drag2=true;pointFromEvent(e);e.preventDefault();},{passive:false});
+cv2.addEventListener('touchmove',e=>{if(drag2){pointFromEvent(e);e.preventDefault();}},{passive:false});
+window.addEventListener('touchend',()=>drag2=false);
+
+/* =========================================================
+   3D — surface z = x^2 + y^2 (auto-fit projection)
+   ========================================================= */
+const cv3=document.getElementById('cv3d');
+const D=4, N=22, ZS=0.16;          // domain, grid resolution, height scale
+function rot(x,y,z){                 // returns {H, V, depth} pre-scale
+  const ca=Math.cos(az), sa=Math.sin(az);
+  const x1=x*ca - y*sa;
+  const y1=x*sa + y*ca;
+  const cb=Math.cos(beta), sb=Math.sin(beta);
+  return { H:x1, V:y1*cb + z*sb, depth:y1*sb - z*cb };
+}
+function draw3d(){
+  const {ctx,w,h}=fit(cv3);
+  ctx.clearRect(0,0,w,h);
+  // build vertices
+  const step=(2*D)/N;
+  const verts=[]; // grid of projected coords
+  let minH=1e9,maxH=-1e9,minV=1e9,maxV=-1e9;
+  const raw=[];
+  for(let i=0;i<=N;i++){
+    raw[i]=[];
+    for(let j=0;j<=N;j++){
+      const x=-D+i*step, y=-D+j*step;
+      const z=(x*x+y*y)*ZS - 1.8;       // centre vertically
+      const p=rot(x,y,z); raw[i][j]={...p,x,y,z};
+      if(p.H<minH)minH=p.H; if(p.H>maxH)maxH=p.H;
+      if(p.V<minV)minV=p.V; if(p.V>maxV)maxV=p.V;
+    }
+  }
+  const spanH=maxH-minH, spanV=maxV-minV;
+  const scale=Math.min(w*0.86/spanH, h*0.84/spanV);
+  const offX=w/2 - (minH+maxH)/2*scale;
+  const offY=h/2 + (minV+maxV)/2*scale;
+  const P=p=>({sx:offX+p.H*scale, sy:offY-p.V*scale});
+  // quads with depth
+  const quads=[];
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+    const a=raw[i][j],b=raw[i+1][j],c=raw[i+1][j+1],d=raw[i][j+1];
+    const zc=(a.z+b.z+c.z+d.z)/4;
+    quads.push({pts:[a,b,c,d],depth:(a.depth+b.depth+c.depth+d.depth)/4,zc});
+  }
+  quads.sort((u,v)=>v.depth-u.depth); // far first
+  // height range for shading
+  const zmin=-1.8, zmax=(D*D+D*D)*ZS-1.8;
+  quads.forEach(q=>{
+    const t=clamp((q.zc-zmin)/(zmax-zmin),0,1);
+    // lerp pale -> steel
+    const r=Math.round(227+(63-227)*t), g=Math.round(235+(90-235)*t), bl=Math.round(245+(134-245)*t);
+    ctx.fillStyle=`rgba(${r},${g},${bl},0.92)`;
+    ctx.strokeStyle='rgba(63,90,134,0.30)';ctx.lineWidth=0.7;
+    ctx.beginPath();
+    q.pts.forEach((p,k)=>{const s=P(p);k?ctx.lineTo(s.sx,s.sy):ctx.moveTo(s.sx,s.sy);});
+    ctx.closePath();ctx.fill();ctx.stroke();
+  });
+  // helper to project an (x,y) world point onto surface or base
+  const proj=(x,y,z)=>{const p=rot(x,y,z*ZS-1.8);return {sx:offX+p.H*scale,sy:offY-p.V*scale,depth:p.depth};};
+  // descent path on surface
+  if(path.length>1){
+    ctx.strokeStyle=GOLD;ctx.lineWidth=2.5;ctx.beginPath();
+    path.forEach((q,i)=>{const s=proj(q.x,q.y,f(q.x,q.y));i?ctx.lineTo(s.sx,s.sy):ctx.moveTo(s.sx,s.sy);});
+    ctx.stroke();
+  }
+  // drop line from surface point to base plane (z=0)
+  const top=proj(pt.x,pt.y,f(pt.x,pt.y));
+  const base=proj(pt.x,pt.y,0);
+  ctx.strokeStyle='rgba(63,90,134,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(top.sx,top.sy);ctx.lineTo(base.sx,base.sy);ctx.stroke();ctx.setLineDash([]);
+  // base point
+  ctx.fillStyle=STEELS;ctx.beginPath();ctx.arc(base.sx,base.sy,3.5,0,7);ctx.fill();
+  // gradient arrow on base plane (in input plane!)
+  const [gx,gy]=grad(pt.x,pt.y);
+  let lx=gx*0.30, ly=gy*0.30; const Lg=Math.hypot(lx,ly);
+  if(Lg>3){lx*=3/Lg;ly*=3/Lg;}
+  const gend=proj(pt.x+lx,pt.y+ly,0);
+  ctx.strokeStyle=GOLD;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(base.sx,base.sy);ctx.lineTo(gend.sx,gend.sy);ctx.stroke();
+  const ga=Math.atan2(gend.sy-base.sy,gend.sx-base.sx);
+  ctx.fillStyle=GOLD;ctx.beginPath();ctx.moveTo(gend.sx,gend.sy);
+  ctx.lineTo(gend.sx-11*Math.cos(ga-0.4),gend.sy-11*Math.sin(ga-0.4));
+  ctx.lineTo(gend.sx-11*Math.cos(ga+0.4),gend.sy-11*Math.sin(ga+0.4));ctx.closePath();ctx.fill();
+  // ball on surface
+  ctx.fillStyle=CRIM;ctx.beginPath();ctx.arc(top.sx,top.sy,8,0,7);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.beginPath();ctx.arc(top.sx-2.5,top.sy-2.5,2.5,0,7);ctx.fill();
+  // labels
+  ctx.fillStyle=STEEL;ctx.font='italic 13px Newsreader,serif';
+  ctx.fillText('z = x² + y²',14,24);
+}
+/* rotate drag on 3D */
+let drag3=false,lastX,lastY;
+cv3.addEventListener('mousedown',e=>{drag3=true;lastX=e.clientX;lastY=e.clientY;stopSpin();});
+window.addEventListener('mousemove',e=>{if(!drag3)return;az-=(e.clientX-lastX)*0.01;beta=clamp(beta-(e.clientY-lastY)*0.008,0.12,1.45);lastX=e.clientX;lastY=e.clientY;draw3d();});
+window.addEventListener('mouseup',()=>drag3=false);
+cv3.addEventListener('touchstart',e=>{drag3=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;stopSpin();e.preventDefault();},{passive:false});
+cv3.addEventListener('touchmove',e=>{if(!drag3)return;az-=(e.touches[0].clientX-lastX)*0.01;beta=clamp(beta-(e.touches[0].clientY-lastY)*0.008,0.12,1.45);lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;draw3d();e.preventDefault();},{passive:false});
+window.addEventListener('touchend',()=>drag3=false);
+
+/* =========================================================
+   descent engine + controls
+   ========================================================= */
+function setStatus(t,c){const e=document.getElementById('o-status');e.textContent=t;e.style.color=c||TEAL;}
+function step(){
+  const [gx,gy]=grad(pt.x,pt.y);
+  pt={x:pt.x-eta*gx, y:pt.y-eta*gy};
+  path.push({x:pt.x,y:pt.y}); iter++;
+  if(Math.abs(pt.x)>40||Math.abs(pt.y)>40){setStatus('Diverged — η too large, the path left the bowl.',CRIM);stopRun();}
+  else if(f(pt.x,pt.y)<1e-4){setStatus('Converged ✓ — ∇f ≈ 0, you are at the minimum.',TEAL);stopRun();}
+  else setStatus('Descending… step '+iter+', factor (1−2η) = '+(1-2*eta).toFixed(2),STEEL);
+  if(path.length>600)path.shift();
+  redraw();
+}
+function runDescent(){if(running)return;running=setInterval(step,120);document.getElementById('b-run').textContent='❚❚ Pause';}
+function stopRun(){if(running){clearInterval(running);running=null;document.getElementById('b-run').textContent='▶ Run descent';}}
+function resetPt(){stopRun();pt={x:start.x,y:start.y};path=[{x:start.x,y:start.y}];iter=0;setStatus('Reset to ('+start.x.toFixed(2)+', '+start.y.toFixed(2)+').');syncInputs();redraw();}
+
+document.getElementById('b-step').addEventListener('click',()=>{stopRun();step();});
+document.getElementById('b-run').addEventListener('click',()=>{running?stopRun():runDescent();});
+document.getElementById('b-reset').addEventListener('click',resetPt);
+document.getElementById('r-lr').addEventListener('input',e=>{eta=+e.target.value;document.getElementById('lr-val').textContent=eta.toFixed(2);});
+function readInputs(){
+  stopRun();
+  let x=parseFloat(document.getElementById('in-x').value);
+  let y=parseFloat(document.getElementById('in-y').value);
+  if(isNaN(x))x=0; if(isNaN(y))y=0;
+  x=clamp(x,-4.5,4.5); y=clamp(y,-4.5,4.5);
+  pt={x,y}; start={x,y}; path=[{x,y}]; iter=0;
+  setStatus('Start set to ('+x.toFixed(2)+', '+y.toFixed(2)+'). Gradient ∇f = ['+(2*x).toFixed(2)+', '+(2*y).toFixed(2)+'].');
+  redraw();
+}
+document.getElementById('in-x').addEventListener('change',readInputs);
+document.getElementById('in-y').addEventListener('change',readInputs);
+
+/* spin */
+function stopSpin(){if(spin){clearInterval(spin);spin=null;document.getElementById('b-spin').textContent='⟳ Auto-rotate';}}
+document.getElementById('b-spin').addEventListener('click',()=>{
+  if(spin){stopSpin();}else{spin=setInterval(()=>{az+=0.012;draw3d();},40);document.getElementById('b-spin').textContent='⟳ Stop rotation';}
+});
+
+window.addEventListener('resize',redraw);
+setTimeout(redraw,80);
+</script>
+</body>
+</html>
