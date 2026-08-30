@@ -501,3 +501,5 @@ Use this bank actively: cover the solution, solve on paper, then compare every s
 ## Accuracy note
 
 The bank covers every official major topic family at least once, but recent-paper weighting is deliberately unequal. It improves readiness; it cannot guarantee a particular score because the future paper and grading are not known. Verify table-dependent critical values and course-specific formula conventions against the authorized watermarked slides during practice.
+
+After completing this bank, use [07_LATEST_PAPER_GAP_CLOSURE.md](07_LATEST_PAPER_GAP_CLOSURE.md) for the exact method gaps revealed by comparison with the latest regular papers.

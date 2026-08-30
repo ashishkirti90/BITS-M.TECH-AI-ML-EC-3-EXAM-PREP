@@ -11,6 +11,7 @@ Exam-oriented preparation guides for MFML, ISM, DNN, and ML, organized around of
 - [ML study guide](exam_analysis/04_ML_STUDY_GUIDE.md)
 - [Repository audit and evidence](exam_analysis/05_REPOSITORY_AUDIT_AND_EVIDENCE.md)
 - [80 solved end-sem questions (20 per subject)](exam_analysis/06_80_SOLVED_QUESTIONS.md)
+- [Latest-paper gap-closure pack (20 detailed questions)](exam_analysis/07_LATEST_PAPER_GAP_CLOSURE.md)
 
 ## Important notice
 
