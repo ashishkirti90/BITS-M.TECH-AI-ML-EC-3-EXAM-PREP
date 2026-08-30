@@ -1,17 +1,28 @@
-# Deny everything by default. This repository should contain only the
-# original exam-preparation guides listed below, not university materials.
-*
+# Windows and editor clutter
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*.temp
+~$*
 
-# Repository documentation
-!.gitignore
-!README.md
+# Temporary/generated analysis artifacts (source documents remain included)
+tmp/
+exam_analysis/extracted/
+exam_analysis/latest_extracted/
+exam_analysis/qa_watermark/
+exam_analysis/watermarks/
+exam_analysis/manifest.tsv
+exam_analysis/topic_frequency.txt
 
-# Generated study guides only
-!exam_analysis/
-exam_analysis/*
-!exam_analysis/00_MASTER_PLAN_AND_TOOLKIT.md
-!exam_analysis/01_MFML_STUDY_GUIDE.md
-!exam_analysis/02_ISM_STUDY_GUIDE.md
-!exam_analysis/03_DNN_STUDY_GUIDE.md
-!exam_analysis/04_ML_STUDY_GUIDE.md
-!exam_analysis/05_REPOSITORY_AUDIT_AND_EVIDENCE.md
+# Local analysis helper scripts
+extract_latest_papers.py
+extract_watermark_full.py
+inspect_watermarks.py
+tools_extract_exam_corpus.py
+topic_frequency.py
+watermark_topic_pages.py
+
+# Python cache
+__pycache__/
+*.pyc
