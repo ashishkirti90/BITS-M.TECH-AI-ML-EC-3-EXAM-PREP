@@ -5,6 +5,41 @@
 
 Workflow/preprocessing/evaluation; linear regression and bias-variance; discriminants/logistic regression; decision trees/entropy/MDL; KNN/LWR/RBF; SVM and kernels; Bayesian learning, MLE/MAP, optimal and Naive Bayes; bagging/RF/AdaBoost/gradient boosting/XGBoost; K-means/GMM/EM; model comparison, bias/fairness/interpretability. Comprehensive covers all topics, 40%, 150 minutes.
 
+## Latest-paper blueprint
+
+The latest verified regular paper is a 40-mark, seven-question paper. Its structure is the strongest available indicator:
+
+| Block | Marks | What was tested | Bank preparation |
+|---|---:|---|---|
+| Q1 | 3 | Lasso versus ensemble under auditability constraints | ML 3, 20, 26, 40 |
+| Q2 | 6 | Mixed-data Gower distance, inverse-square KNN, ordinal versus nominal | ML 6, 21, 22 |
+| Q3 | 8 | AdaBoost misclassification, weighted error, alpha and interpretation | ML 13, 35 |
+| Q4 | 6 | Multinomial NB with Laplace smoothing and repeated tokens | ML 9, 23 |
+| Q5 | 8 | SVM overfit diagnosis, C/degree, score, geometric margin, soft margin | ML 17–19, 24, 38–39 |
+| Q6 | 6 | K-means update, GMM soft responsibility and model choice | ML 15–16, 36–37 |
+| Q7 | 3 | Linear/logistic/tree behavior and stability | ML 4–5, 25, 29 |
+
+The latest makeup reinforces ridge bias–variance, Gaussian NB, KNN versus LWR, bagging/RF/AdaBoost, majority probability, GMM/EM, gradient boosting, SVM and tree depth. The stable core is therefore **instance learning + Bayes + ensembles + clustering + SVM**, with regularized linear/tree reasoning as smaller but efficient marks.
+
+## Twelve-hour scoring plan
+
+| Block | Duration | Topic and output |
+|---|---:|---|
+| 1 | 45 min | Read priority map; memorize algorithm-selection triggers |
+| 2 | 75 min | Ridge/lasso/logistic/tree; solve ML 3–5, 24–29 |
+| 3 | 90 min | Gower + weighted KNN; reproduce a complete distance table |
+| 4 | 60 min | KNN regression, LWR and RBF; solve ML 7, 30, 31 |
+| 5 | 90 min | Gaussian and multinomial NB; MLE/MAP/Bayes optimal |
+| 6 | 105 min | Bagging/RF/AdaBoost/gradient boosting; full weight update |
+| 7 | 75 min | K-means and GMM/EM; one full 2-D cycle each |
+| 8 | 105 min | SVM geometry, C, support vectors and kernels |
+| 9 | 45 min | Evaluation, fairness, interpretability and scenario answers |
+| 10 | 150 min | Latest regular paper, closed-notes except authorized lookup |
+| 11 | 60 min | Mark, create error log, redo every lost-mark calculation |
+| 12 | 60 min | Latest makeup selected blocks + final formula retrieval drill |
+
+Do not spend equal time on modules. The five numerical families—Gower/KNN, NB, AdaBoost, EM and SVM—deserve most practice because they recur and provide step marks.
+
 ## Priority map
 
 | Topic | Priority | Recent evidence | Form | Difficulty | Exact preparation |
@@ -176,6 +211,129 @@ The authorized `ML WaterMark.pdf` is 178 pages and covers M1–M11. It is useful
 - [ ] Decision-tree overfit and entropy/gain.
 - [ ] Latest regular and makeup papers timed.
 
+
+## Full-mark answer templates
+
+### Template A — Scenario/model-selection question
+
+Write five linked sentences:
+
+1. **Requirement:** identify target type, sample/feature structure and non-negotiable constraint.
+2. **Model mechanism:** state what the recommended model optimizes or represents.
+3. **Why it fits:** connect mechanism to sparsity, nonlinearity, overlap, latency or auditability.
+4. **Trade-off:** name the main limitation and why the alternative may score better on another metric.
+5. **Validation:** specify the metric/CV/subgroup or calibration check before deployment.
+
+Avoid empty statements such as “Model X is better.” The latest paper explicitly rewards contextual mechanism and trade-off.
+
+### Template B — Gower plus weighted KNN
+
+1. Declare feature types and ranges.
+2. Numeric difference: `|x_i-z_i|/(max_i-min_i)`.
+3. Nominal: 0 for match, 1 for mismatch.
+4. Ordinal: convert ordered levels to normalized ranks before absolute difference.
+5. Average valid per-feature contributions to obtain Gower distance.
+6. Compute stated kernel, commonly `1/d²`; handle `d=0` explicitly.
+7. Sum weights by class and report prediction plus reason.
+8. If a feature changes type, recompute all affected rows and class totals.
+
+### Template C — Naive Bayes
+
+1. Compute class priors.
+2. Choose distribution by feature: Gaussian continuous; multinomial counts; categorical probabilities for categories.
+3. Apply Laplace smoothing exactly: `(count+alpha)/(class total+alpha V)`.
+4. Raise word probabilities to their observed counts.
+5. Multiply with prior or add log probabilities.
+6. Compare unnormalized scores; normalize only if explicitly asked.
+7. State prediction and conditional-independence assumption.
+
+### Template D — AdaBoost
+
+1. Identify misclassified observations.
+2. Sum their current weights: `epsilon=sum_mis w_i`.
+3. `alpha=.5 ln((1-epsilon)/epsilon)`.
+4. Update `w_i exp(-alpha y_i h_i)`.
+5. Normalize by total.
+6. Identify newly emphasized samples and explain why.
+7. Add one strength and one noise/outlier limitation if asked.
+
+### Template E — K-means versus GMM
+
+For K-means, show every point-to-centroid distance, assign all points, then update centroids simultaneously. For GMM:
+
+`gamma_ik = pi_k N(x_i|mu_k,Sigma_k) / sum_j pi_j N(x_i|mu_j,Sigma_j)`
+
+`N_k=sum_i gamma_ik`, `pi_k=N_k/N`, `mu_k=sum gamma_ik x_i/N_k`, and covariance is the responsibility-weighted outer-product average. Finish with: K-means is hard, spherical/distance-based assignment; GMM is probabilistic and can represent unequal covariance/overlap.
+
+### Template F — SVM
+
+1. Score `f(x)=w^Tx+b`; class is its sign.
+2. Point-to-boundary distance `|f(x)|/||w||`.
+3. Canonical support constraints equal 1: `y_i f(x_i)=1`.
+4. Total canonical margin width `2/||w||`; distance from boundary to one margin is `1/||w||`.
+5. Large C: violations expensive, lower training bias/higher variance; small C: wider regularized margin.
+6. High-degree/RBF flexibility can overfit without tuned C/kernel parameters.
+7. In the dual, only nonzero-alpha observations contribute to `w`.
+8. Kernel Gram storage is `O(N²)`.
+
+## Quick-reference sheet
+
+| Method | Governing expression | One diagnostic sentence |
+|---|---|---|
+| Ridge | `SSE+lambda||w||²` | Shrinks correlated coefficients; usually not sparse |
+| Lasso | `SSE+lambda||w||₁` | Exact zeros; useful for sparse/auditable model |
+| Logistic | `sigma(w^Tx+b)` | Bounded probability with linear feature-space boundary |
+| Entropy | `-sum p log2 p` | Zero for pure node; maximum for balanced classes |
+| Gower | mean of normalized feature dissimilarities | Correct for mixed numeric/nominal/ordinal data |
+| Gaussian NB | prior times product of Gaussian densities | Use class-specific means/variances and log space |
+| Multinomial NB | prior times product `P(word|class)^count` | Laplace smoothing prevents zero likelihood |
+| AdaBoost | `.5 ln((1-e)/e)` | Sequentially emphasizes difficult observations |
+| Majority vote | binomial sum above half | Independence assumption often overstates benefit |
+| Gradient boost | `F_new=F+eta h_residual` | Fits negative gradients sequentially |
+| K-means | assign nearest, update mean | Hard spherical clusters; scale sensitive |
+| GMM | responsibility then weighted M-step | Soft membership and covariance modelling |
+| SVM | `sign(w^Tx+b)` | Margin and support vectors determine boundary |
+
+## Authorized open-book index
+
+Use the university-authorized `ML WaterMark.pdf` with physical-page tabs. Its alignment is strong, but it has no useful PDF outline and is inefficient without indexing.
+
+| Physical pages | Bookmark label | Use during exam |
+|---:|---|---|
+| 34–37 | Ridge/Lasso | Objective and shrinkage/sparsity comparison |
+| 39–51 | Logistic | Sigmoid, loss and decision behavior |
+| 53–70 | Trees | Entropy, gain, pruning and behavior |
+| 72–82 | KNN/LWR | Gower, weighted KNN and local regression |
+| 92–104 | Naive Bayes | Gaussian/multinomial and Laplace examples |
+| 110–126 | Ensembles | Bagging, RF, AdaBoost and boosting |
+| 128–143 | K-means/GMM | Assignment, responsibility and EM steps |
+| 144–178 | SVM | Margin, dual, kernels and soft margin |
+
+Do not rely on the slides for regulatory auditability/fairness prose; prepare the short model-selection template from memory. The SVM portion contains repeated material, so tab one good numerical example rather than searching the entire range.
+
+## Exam-hall execution for a 40-mark paper
+
+1. Spend the first 5 minutes classifying every question by algorithm and writing its page-tab beside it.
+2. Start with the highest-confidence complete numerical, not automatically Q1.
+3. Budget roughly 3–3.5 minutes per mark, retaining 10–15 minutes for checking.
+4. For every numerical, write formula → substitution → result → interpretation. Intermediate work protects partial marks.
+5. For scenario questions, explicitly connect data fact to model mechanism and trade-off.
+6. If arithmetic stalls, preserve method marks: write the remaining formula and symbolic conclusion, then move on.
+7. Check NB denominators, AdaBoost normalization, Gower feature types, K-means update order, and SVM margin convention.
+8. Use the slides only after identifying the method. Searching before classification wastes open-book time.
+
+## Last-night checklist
+
+- [ ] Complete Gower table with ordinal and nominal variants.
+- [ ] Gaussian NB and multinomial NB with repeated counts.
+- [ ] AdaBoost error, alpha and normalized weights.
+- [ ] Majority-vote probability and bagging/RF explanation.
+- [ ] One K-means cycle and one complete GMM E/M cycle.
+- [ ] SVM score, distance, canonical margin, C and kernel reasoning.
+- [ ] Ridge/lasso and linear/logistic/tree comparison.
+- [ ] Ten-second definitions: MLE, MAP, generative, discriminative, support vector, responsibility.
+- [ ] All eight page tabs accessible in under 30 seconds.
+- [ ] Latest regular paper attempted under 150 minutes and error log retested.
 
 ## Companion question bank
 

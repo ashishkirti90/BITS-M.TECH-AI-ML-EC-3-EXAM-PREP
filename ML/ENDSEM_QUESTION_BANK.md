@@ -14,9 +14,26 @@
 - The numerical values in original drills are practice values; a PYQ-pattern label refers to verified structure, not a claim of verbatim reproduction.
 - After each error, bookmark the matching worked example in the authorized watermarked slides.
 
+## Table of contents and exam relevance
+
+| Topic | Questions | Latest-paper signal |
+|---|---:|---|
+| Workflow, evaluation, bias–variance and regularization | 1–4, 26–27 | Regular Q1/Q7; makeup Q1 |
+| Decision trees | 5, 28–29 | Regular Q7; makeup depth/overfit |
+| KNN, Gower distance, LWR and RBF | 6–7, 21–22, 30–31 | Regular Q2; makeup Q3 |
+| Bayesian learning and Naive Bayes | 8–10, 23, 32–33 | Regular Q4; makeup Q2 |
+| Ensembles | 11–14, 34–35 | Regular Q3; makeup Q4/Q6 |
+| K-means, GMM and EM | 15–16, 36–37 | Regular Q6; makeup Q5 |
+| SVM, soft margin and kernels | 17–19, 24, 38–39 | Regular Q5; makeup Q7 |
+| Interpretability, fairness and model selection | 20, 25, 40 | Both latest variants |
+
+**Labels.** `Verified PYQ pattern` means the method and structure were verified in the named paper. `Original drill` means the values are newly created for practice. A star `★` marks a family appearing in both latest regular and makeup cycles.
+
 ---
 
-## ML — 20 solved questions
+## Core solved questions
+
+### Topic 1 — Workflow, evaluation and regularized linear models
 
 ### ML 1 — Leakage-safe workflow [SHOULD DO | Official syllabus]
 
@@ -42,11 +59,15 @@
 
 **Solution.** Linear predictions are unbounded and squared error does not model Bernoulli likelihood. Logistic regression uses `p=sigmoid(w^Tx+b)` in `[0,1]`, log loss, and a linear decision boundary in feature space. Threshold selection can reflect costs.
 
+### Topic 2 — Decision trees
+
 ### ML 5 — Entropy and information gain [HIGH | Tree syllabus/PYQs]
 
 **Question.** A node has 4 positive, 4 negative cases. A split produces two pure children of size 4. Find information gain.
 
 **Solution.** Parent entropy is 1 bit. Each pure child entropy is 0, so weighted child entropy is 0 and gain is 1. Real tree algorithms choose the split with largest gain (or related criterion); deep trees can overfit, controlled by depth/min-leaf/pruning.
+
+### Topic 3 — Instance-based learning: KNN, Gower and LWR
 
 ### ML 6 — Distance-weighted KNN [MUST DO | Latest regular]
 
@@ -59,6 +80,8 @@
 **Question.** Neighbor targets 2,4,8 at distances 1,1,2; compute inverse-distance KNN regression. Why might LWR differ?
 
 **Solution.** Weights `1,1,.5`; prediction `(2+4+4)/2.5=4`. LWR fits a local line/plane using distance weights, so it captures a local trend rather than merely averaging targets; it costs optimization per query.
+
+### Topic 4 — Bayesian learning and Naive Bayes
 
 ### ML 8 — Gaussian Naive Bayes [MUST DO | Latest makeup]
 
@@ -77,6 +100,8 @@
 **Question.** Distinguish them.
 
 **Solution.** MLE maximizes `p(D|theta)`; MAP maximizes `p(D|theta)p(theta)` and incorporates a prior. In log form, a Gaussian prior on weights corresponds to an L2-like penalty; a Laplace prior corresponds to L1-like regularization. With abundant data the likelihood often dominates.
+
+### Topic 5 — Ensembles
 
 ### ML 11 — Bagging and random forests [MUST DO | Latest makeup]
 
@@ -102,6 +127,8 @@
 
 **Solution.** Residuals are `(2,-1)`. Update `F_new=F_old+.2h=(3.3,4.9)`. Boosting fits negative gradients/residuals sequentially, unlike bagging’s independent models.
 
+### Topic 6 — K-means, GMM and EM
+
 ### ML 15 — K-means iteration [MUST DO | Both recent]
 
 **Question.** Points `{1,2,8,9}`, initial centroids 1 and 8. Perform one iteration.
@@ -113,6 +140,8 @@
 **Question.** Points 0 and 2 have component-1 responsibilities `.8,.2`. Update its mixing weight and mean.
 
 **Solution.** `N1=.8+.2=1`; with `N=2`, `pi1=.5`. `mu1=(.8*0+.2*2)/1=.4`. Variance is the responsibility-weighted squared deviation divided by `N1`. GMM membership is soft; K-means uses hard 0/1 assignments.
+
+### Topic 7 — SVM and kernels
 
 ### ML 17 — Hard-margin SVM geometry [MUST DO | All extractable cycles]
 
@@ -132,6 +161,8 @@
 
 **Solution.** Expand `1+2xz+x²z²`; choose `phi(x)=(1,sqrt2x,x²)`, whose dot product equals the kernel. Kernel methods avoid explicit high-dimensional features, but storing an `N x N` Gram matrix costs `O(N²)` memory and training can be expensive for large N.
 
+### Topic 8 — Model selection, interpretability and fairness
+
 ### ML 20 — Model selection, fairness and interpretability [HIGH | Latest scenario style]
 
 **Question.** A slightly more accurate ensemble fails an auditability requirement; a sparse logistic model is close in performance. Choose and justify.
@@ -144,7 +175,7 @@
 
 ## ML — five gap-closing questions
 
-### 16. Complete Gower distance
+### ML 21 — Complete Gower distance [MUST DO | Regular Q2 pattern]
 
 **Latest-paper link:** ML latest regular Q2.
 
@@ -152,7 +183,7 @@
 
 **Solution.** Age difference `|34-30|/40=.1`; spend difference `|52-40|/80=.15`; job difference 0; ordinal-tier difference `|2-3|/(3-1)=.5`. Gower distance `(.1+.15+0+.5)/4=.1875`. With kernel `1/d²`, weight is `1/.1875²=28.444`. Compute each attribute contribution before averaging.
 
-### 17. Ordinal-to-nominal Gower recomputation
+### ML 22 — Ordinal-to-nominal Gower recomputation [MUST DO | Regular Q2(c) pattern]
 
 **Latest-paper link:** ML latest regular Q2(c).
 
@@ -160,7 +191,7 @@
 
 **Solution.** Different nominal categories contribute 1 instead of .5. New distance `(.1+.15+0+1)/4=.3125`; new weight `1/.3125²=10.24`. The neighbor’s influence falls by `28.444-10.24=18.204`. Recompute **class sums** before deciding whether the final prediction changes; one neighbor’s change alone does not establish the class.
 
-### 18. Full multinomial NB document posterior
+### ML 23 — Full multinomial NB document posterior [MUST DO | Regular Q4 pattern]
 
 **Latest-paper link:** ML latest regular Q4.
 
@@ -174,7 +205,7 @@
 
 Predict C. The repeated word squares its conditional probability. Normalization is unnecessary for argmax; use log scores for long documents.
 
-### 19. SVM overfitting, C and polynomial degree
+### ML 24 — SVM overfitting, C and polynomial degree [MUST DO | Regular Q5 pattern]
 
 **Latest-paper link:** ML latest regular Q5.
 
@@ -182,7 +213,7 @@ Predict C. The repeated word squares its conditional probability. Normalization 
 
 **Solution.** B overfits: its 26-point generalization gap is much larger. Large C strongly penalizes training errors, encouraging a tighter boundary sensitive to noise; degree 6 supplies highly flexible nonlinear interactions. A’s similar train/test scores suggest a simple boundary generalizes better and the data likely contains overlap rather than requiring extreme nonlinear separation. Prefer validation-based C/kernel selection, not training accuracy.
 
-### 20. Tree discontinuity and high-stakes stability
+### ML 25 — Tree discontinuity and high-stakes stability [HIGH | Regular Q7 pattern]
 
 **Latest-paper link:** ML latest regular Q7.
 
@@ -191,6 +222,100 @@ Predict C. The repeated word squares its conditional probability. Normalization 
 **Solution.** If a tree split is `x<=5`, the two inputs follow different branches and may reach leaves with very different predictions; its function is piecewise constant and discontinuous at thresholds. Logistic probability `sigmoid(wx+b)` is continuous, so a tiny input change ordinarily gives a tiny probability change. Abruptness can harm stability, fairness and user trust near policy thresholds; report sensitivity and consider pruning, ensembles, monotonic constraints or review bands.
 
 ---
+
+## Additional full-mark variants
+
+### ML 26 — Ridge closed-form and lambda effect [HIGH | Original drill]
+
+**Problem.** For centered one-feature data with `XᵀX=4` and `Xᵀy=8`, compute the ridge estimate for `lambda=0` and `lambda=4`. Explain the bias–variance change.
+
+**Solution.** Ridge gives `w=(XᵀX+lambda I)⁻¹Xᵀy`. At `lambda=0`, `w=8/4=2`; at `lambda=4`, `w=8/8=1`. Regularization shrinks the coefficient toward zero. This generally increases bias but reduces sensitivity to sampling noise and therefore variance. It does not normally make the coefficient exactly zero—that is the characteristic L1/lasso effect.
+
+**Full-mark line:** “Choose lambda by validation; do not select it using the test set.”
+
+### ML 27 — Confusion matrix and threshold choice [HIGH | Scenario drill]
+
+**Problem.** A fraud model gives `TP=30, FN=10, FP=20, TN=940`. Compute accuracy, precision, recall and F1. Which metric deserves priority if missed fraud is very costly?
+
+**Solution.** Accuracy `(30+940)/1000=.97`; precision `30/(30+20)=.60`; recall `30/(30+10)=.75`; `F1=2(.60)(.75)/(.60+.75)=.6667`. Recall deserves priority when false negatives are costliest, but threshold selection must also quantify the cost of false alarms. The example shows why 97% accuracy can conceal only 75% fraud recall.
+
+### ML 28 — Continuous decision-tree split [SHOULD DO | Original drill]
+
+**Problem.** Sorted one-dimensional observations are `(1,N),(2,N),(5,Y),(6,Y)`. Identify a perfect split and its information gain.
+
+**Solution.** Candidate thresholds lie between adjacent distinct values; `t=3.5` separates the two N cases from the two Y cases. Parent entropy is 1 bit; both children are pure, so weighted child entropy is zero and information gain is 1. A correct answer must state the threshold, resulting children and weighted entropy—not merely “split between 2 and 5.”
+
+### ML 29 — Pre-pruning versus post-pruning [SHOULD DO | Tree family]
+
+**Problem.** Contrast pre-pruning and post-pruning and recommend one safeguard for a small dataset.
+
+**Solution.** Pre-pruning stops growth using maximum depth, minimum samples per split/leaf or minimum impurity decrease. Post-pruning first grows a larger tree and removes weak branches using validation or cost-complexity criteria. For small data, tune depth/min-leaf or cost-complexity alpha inside cross-validation. A shallow tree lowers variance but can underfit.
+
+### ML 30 — KNN regression versus LWR numerical [MUST DO | Makeup Q3 pattern]
+
+**Problem.** At query `x0=2`, observations are `(1,1),(2,2),(3,5)`. (a) Give 3-NN regression. (b) Using weights `K=exp(-(x-x0)²)` fit only a local constant.
+
+**Solution.** (a) Unweighted KNN prediction `(1+2+5)/3=8/3=2.6667`. (b) Weights are `(e⁻¹,1,e⁻¹)≈(.3679,1,.3679)`. Weighted local-constant estimate is `(.3679*1+1*2+.3679*5)/(1+2*.3679)=4.2074/1.7358=2.424`. LWR can instead fit a local slope; always follow the model specified.
+
+### ML 31 — RBF similarity and bandwidth [SHOULD DO | Official syllabus]
+
+**Problem.** Compute `K(x,c)=exp(-||x-c||²/(2sigma²))` for distance 2 and `sigma=1`. Explain small versus large sigma.
+
+**Solution.** `K=exp(-4/2)=e⁻²=.1353`. Small sigma gives narrow, highly local influence and higher variance; large sigma gives broad smooth influence and potentially higher bias. This bandwidth role parallels neighborhood size in KNN.
+
+### ML 32 — Gaussian NB with two features [MUST DO | Makeup Q2 pattern]
+
+**Problem.** Equal priors. For an observation, feature likelihoods under class A are `.4,.5`; under B `.2,.8`. Apply Naive Bayes.
+
+**Solution.** Unnormalized scores: A `.5*.4*.5=.10`; B `.5*.2*.8=.08`. Predict A; normalized posterior is `.10/.18=.5556`. The multiplication assumes conditional independence given class. With raw Gaussian features, calculate each density using its class-specific mean and variance; in long products use logs.
+
+### ML 33 — Bayes-optimal classification [SHOULD DO | Official syllabus]
+
+**Problem.** Two hypotheses have posterior probabilities `.6` and `.4` but predict positive with probabilities `.2` and `.9`. What is the Bayes-optimal probability of positive?
+
+**Solution.** Average predictions over hypothesis uncertainty: `.6(.2)+.4(.9)=.48`. Bayes-optimal classification predicts positive only if the relevant decision threshold is below `.48` (normally `.5`, giving negative). MAP would select only the `.6` hypothesis and output `.2`; Bayes-optimal prediction integrates all hypotheses.
+
+### ML 34 — Random-forest feature sampling [MUST DO | Ensemble concept]
+
+**Problem.** Why does random feature selection help beyond bootstrap bagging?
+
+**Solution.** If one powerful feature appears at every split, bagged trees remain similar and their errors stay correlated. Sampling candidate features forces diverse trees. Averaging correlated models gives limited variance reduction; decorrelation improves the ensemble benefit. The trade-off is that each individual tree may be slightly weaker.
+
+### ML 35 — AdaBoost full weight update [MUST DO | Regular Q3 pattern]
+
+**Problem.** Four samples start with weights `.25`; a learner misclassifies only sample 2. Compute error, learner weight and normalized new weights.
+
+**Solution.** `epsilon=.25`; `alpha=.5 ln(.75/.25)=.5ln3=.5493`. Correct weights multiply by `e^-alpha=.57735`; the incorrect weight by `e^alpha=1.73205`. Unnormalized weights are `(.14434,.43301,.14434,.14434)` with sum `.86603`. Normalized weights are `(1/6,1/2,1/6,1/6)`. The misclassified example now receives half the total attention.
+
+### ML 36 — Two-dimensional K-means cycle [MUST DO | Regular Q6 pattern]
+
+**Problem.** Points `A(1,1),B(2,1),C(7,5),D(8,6)` start with centroids A and D. Perform one complete assignment/update cycle.
+
+**Solution.** A and B are closer to `(1,1)`; C and D to `(8,6)`. Updated centroids are `mu1=((1+2)/2,(1+1)/2)=(1.5,1)` and `mu2=((7+8)/2,(5+6)/2)=(7.5,5.5)`. Assign all points using the old centroids, then update simultaneously. Report the distance metric and tie rule if a tie occurs.
+
+### ML 37 — Full GMM responsibility and M-step [MUST DO | Makeup Q5 pattern]
+
+**Problem.** For points `0,2`, component-1 responsibilities are `.8,.2` and component-2 responsibilities `.2,.8`. Compute mixing weights, means and ML variances.
+
+**Solution.** Effective counts are `N1=N2=1`, hence `pi1=pi2=.5`. `mu1=(.8*0+.2*2)=.4`; `mu2=(.2*0+.8*2)=1.6`. `var1=.8(0-.4)²+.2(2-.4)²=.128+.512=.64`; by symmetry `var2=.64`. Responsibilities are soft assignments; they must sum to one across components for each point.
+
+### ML 38 — Solve canonical SVM parameters [MUST DO | Support-vector pattern]
+
+**Problem.** In one dimension, support points `(x=1,y=-1)` and `(x=5,y=+1)` lie on canonical margins. Find `w,b`, boundary and total margin width.
+
+**Solution.** Solve `w+b=-1` and `5w+b=1`. Subtraction gives `4w=2`, so `w=.5`; then `b=-1.5`. Boundary `wx+b=0` is `x=3`. Total canonical margin width is `2/|w|=4`. Verify the negative and positive support scores are `-1,+1` respectively.
+
+### ML 39 — Kernel Gram matrix and PSD check [MUST DO | Kernel pattern]
+
+**Problem.** For inputs `0,1,2`, compute the Gram matrix of the linear kernel `k(x,z)=xz` and show it is PSD.
+
+**Solution.** `K=[[0,0,0],[0,1,2],[0,2,4]]`. It equals `xxᵀ` for `x=(0,1,2)ᵀ`. For any vector a, `aᵀKa=aᵀxxᵀa=(xᵀa)²>=0`, hence PSD. It has rank one. Valid kernel Gram matrices must be symmetric PSD for every finite input set.
+
+### ML 40 — Cost-aware auditable model selection [HIGH | Regular Q1/Q7 style]
+
+**Problem.** Model A is sparse logistic regression with AUCPR `.61`; Model B is gradient boosting with AUCPR `.65`. Regulation requires traceable feature contributions and stable decisions. Give a defensible selection process.
+
+**Solution.** Do not choose solely from `.04` AUCPR difference. First confirm both estimates with repeated/stratified validation and uncertainty. Evaluate calibration, subgroup precision/recall, stability, latency and cost-weighted errors. If auditability is binding and the performance difference is not operationally material, select A and document coefficients, preprocessing and threshold. If B’s gain is essential, deploy only with an accepted explanation/audit framework and governance approval. Interpretability is not proof of fairness or causality.
 
 ## Mastery test
 
