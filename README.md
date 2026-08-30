@@ -10,6 +10,7 @@ Exam-oriented preparation guides for MFML, ISM, DNN, and ML, organized around of
 - [DNN study guide](exam_analysis/03_DNN_STUDY_GUIDE.md)
 - [ML study guide](exam_analysis/04_ML_STUDY_GUIDE.md)
 - [Repository audit and evidence](exam_analysis/05_REPOSITORY_AUDIT_AND_EVIDENCE.md)
+- [80 solved end-sem questions (20 per subject)](exam_analysis/06_80_SOLVED_QUESTIONS.md)
 
 ## Important notice
 
