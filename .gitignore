@@ -1,0 +1,17 @@
+# Deny everything by default. This repository should contain only the
+# original exam-preparation guides listed below, not university materials.
+*
+
+# Repository documentation
+!.gitignore
+!README.md
+
+# Generated study guides only
+!exam_analysis/
+exam_analysis/*
+!exam_analysis/00_MASTER_PLAN_AND_TOOLKIT.md
+!exam_analysis/01_MFML_STUDY_GUIDE.md
+!exam_analysis/02_ISM_STUDY_GUIDE.md
+!exam_analysis/03_DNN_STUDY_GUIDE.md
+!exam_analysis/04_ML_STUDY_GUIDE.md
+!exam_analysis/05_REPOSITORY_AUDIT_AND_EVIDENCE.md
