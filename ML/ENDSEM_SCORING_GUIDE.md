@@ -1,6 +1,8 @@
 # ML End-Sem Scoring Guide
 
 > **Purpose:** Maximize expected comprehensive-exam marks in a 5–6 day preparation window. This guide follows the reference repository's scoring-guide model: syllabus map, recent-paper signal, priority, formulas, scoring workflows, common mistakes, and open-book strategy.
+
+> **Difficulty warning:** Level A questions in the companion bank are short method drills and are not exam-equivalent alone. Level B contains the required lengthy multi-part questions; Level C contains complete 40-mark mocks. Claim exam readiness only after completing all three levels.
 ## Official syllabus map
 
 Workflow/preprocessing/evaluation; linear regression and bias-variance; discriminants/logistic regression; decision trees/entropy/MDL; KNN/LWR/RBF; SVM and kernels; Bayesian learning, MLE/MAP, optimal and Naive Bayes; bagging/RF/AdaBoost/gradient boosting/XGBoost; K-means/GMM/EM; model comparison, bias/fairness/interpretability. Comprehensive covers all topics, 40%, 150 minutes.
@@ -39,6 +41,16 @@ The latest makeup reinforces ridge bias–variance, Gaussian NB, KNN versus LWR,
 | 12 | 60 min | Latest makeup selected blocks + final formula retrieval drill |
 
 Do not spend equal time on modules. The five numerical families—Gower/KNN, NB, AdaBoost, EM and SVM—deserve most practice because they recur and provide step marks.
+
+### Three-level completion rule
+
+| Level | Purpose | Completion standard |
+|---|---|---|
+| A — 40 foundation drills | Learn isolated formulas and algorithm steps | At least 90% correct without worked solution |
+| B — 15 full-length questions | Combine numerical, interpretation and changed assumptions | At least 75% of marks on first timed attempt; 100% after correction |
+| C — two 40-mark mocks | Simulate paper selection, retrieval and time pressure | At least 32/40 twice, with no unattempted question |
+
+For a 40/40 target, “I understand the solution” is not completion. You must produce it under the time budget, including assumptions, intermediate calculations and contextual conclusion.
 
 ## Priority map
 
