@@ -1,5 +1,6 @@
-# Machine Learning End-Sem Study Guide
+# ML End-Sem Scoring Guide
 
+> **Purpose:** Maximize expected comprehensive-exam marks in a 5–6 day preparation window. This guide follows the reference repository's scoring-guide model: syllabus map, recent-paper signal, priority, formulas, scoring workflows, common mistakes, and open-book strategy.
 ## Official syllabus map
 
 Workflow/preprocessing/evaluation; linear regression and bias-variance; discriminants/logistic regression; decision trees/entropy/MDL; KNN/LWR/RBF; SVM and kernels; Bayesian learning, MLE/MAP, optimal and Naive Bayes; bagging/RF/AdaBoost/gradient boosting/XGBoost; K-means/GMM/EM; model comparison, bias/fairness/interpretability. Comprehensive covers all topics, 40%, 150 minutes.
@@ -174,3 +175,8 @@ The authorized `ML WaterMark.pdf` is 178 pages and covers M1–M11. It is useful
 - [ ] SVM support-vector/margin/kernel numerical.
 - [ ] Decision-tree overfit and entropy/gain.
 - [ ] Latest regular and makeup papers timed.
+
+
+## Companion question bank
+
+Use [ML End-Sem Question Bank](ENDSEM_QUESTION_BANK.md) for the 25 fully solved subject questions.

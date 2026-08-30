@@ -1,5 +1,6 @@
-# DNN End-Sem Study Guide
+# DNN End-Sem Scoring Guide
 
+> **Purpose:** Maximize expected comprehensive-exam marks in a 5–6 day preparation window. This guide follows the reference repository's scoring-guide model: syllabus map, recent-paper signal, priority, formulas, scoring workflows, common mistakes, and open-book strategy.
 ## Official syllabus map
 
 Fundamentals/perceptron/MLP; feedforward networks and backprop; optimization; regularization; CNN and transfer learning; RNN/BPTT/LSTM/GRU; attention and transformers; NAS; CNN/LSTM time-series forecasting; federated, meta and online learning. Comprehensive covers all topics, 40%, 150 minutes.
@@ -166,3 +167,8 @@ The authorized `DNNWaterMarked.pdf` has 196 pages and covers the core modules we
 - [ ] Optimizer/regularizer curve diagnoses.
 - [ ] BERT/GPT/T5 task matching.
 - [ ] Both 2026 papers solved selectively under time.
+
+
+## Companion question bank
+
+Use [DNN End-Sem Question Bank](ENDSEM_QUESTION_BANK.md) for the 25 fully solved subject questions.

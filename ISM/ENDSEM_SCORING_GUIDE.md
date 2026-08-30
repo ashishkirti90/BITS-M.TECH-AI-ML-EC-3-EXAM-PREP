@@ -1,5 +1,6 @@
-# ISM End-Sem Study Guide
+# ISM End-Sem Scoring Guide
 
+> **Purpose:** Maximize expected comprehensive-exam marks in a 5–6 day preparation window. This guide follows the reference repository's scoring-guide model: syllabus map, recent-paper signal, priority, formulas, scoring workflows, common mistakes, and open-book strategy.
 ## Official syllabus map
 
 Sessions 1–2 descriptive statistics/probability; 3–4 conditional probability/Bayes/Naive Bayes; 5–6 random variables and distributions; 7 sampling/CLT/interval estimation; 9 hypothesis tests; 10 MLE and one/two-way ANOVA; 11 correlation/regression; 12 moving averages; 13 AR/ARMA/ARIMA; 14 SARIMA/SARIMAX/VAR/VARMAX/SES; 15 GMM/EM. Comprehensive is all sessions, open book, 40%, 150 minutes.
@@ -182,3 +183,8 @@ The authorized `ISM watermark.pdf` is 261 pages: excellent examples but too larg
 - [ ] GMM density/responsibility.
 - [ ] Explain ARIMA `(p,d,q)` and white-noise residuals.
 - [ ] Solve both 2026 papers’ core numericals.
+
+
+## Companion question bank
+
+Use [ISM End-Sem Question Bank](ENDSEM_QUESTION_BANK.md) for the 25 fully solved subject questions.

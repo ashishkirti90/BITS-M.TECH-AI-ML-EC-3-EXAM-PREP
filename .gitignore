@@ -8,12 +8,7 @@ Desktop.ini
 
 # Temporary/generated analysis artifacts (source documents remain included)
 tmp/
-exam_analysis/extracted/
-exam_analysis/latest_extracted/
-exam_analysis/qa_watermark/
-exam_analysis/watermarks/
-exam_analysis/manifest.tsv
-exam_analysis/topic_frequency.txt
+exam_analysis/
 
 # Local analysis helper scripts
 extract_latest_papers.py

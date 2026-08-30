@@ -1,5 +1,6 @@
-# MFML End-Sem Study Guide
+# MFML End-Sem Scoring Guide
 
+> **Purpose:** Maximize expected comprehensive-exam marks in a 5–6 day preparation window. This guide follows the reference repository's scoring-guide model: syllabus map, recent-paper signal, priority, formulas, scoring workflows, common mistakes, and open-book strategy.
 ## Official syllabus map
 
 Sessions 1–3: linear systems, vector spaces, rank/basis, norms/inner products/orthogonality. Sessions 4–5: determinant, trace, eigen, Cholesky, diagonalization, SVD, low-rank approximation. Sessions 6–8: derivatives, gradients/Jacobians, backprop, Hessian, Taylor, unconstrained extrema. Sessions 9–11: GD, constrained/convex optimization, SGD and adaptive optimizers. Sessions 12–13: PCA. Sessions 14–16: KKT, primal/dual SVM, kernels.
@@ -175,3 +176,8 @@ Memorize the workflow for RREF, eigen, SVD, GD, PCA and SVM; understand why each
 - [ ] Hinge-loss objective and kernel matrix.
 - [ ] KKT four-condition check.
 - [ ] Latest regular and makeup selected questions completed under 70 minutes each.
+
+
+## Companion question bank
+
+Use [MFML End-Sem Question Bank](ENDSEM_QUESTION_BANK.md) for the 25 fully solved subject questions.

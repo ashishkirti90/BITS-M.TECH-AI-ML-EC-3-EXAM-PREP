@@ -1,20 +1,33 @@
-# BITS M.Tech AI & ML EC-3 Exam Preparation
+# BITS M.Tech AI & ML — End-Semester Preparation
 
-Exam-oriented preparation guides for MFML, ISM, DNN, and ML, organized around official syllabus coverage, recent-question-paper signals, numerical patterns, and open-book retrieval.
+Exam-oriented preparation for MFML, ISM, DNN, and ML. The repository is organized subject-by-subject, following the simple question-bank/scoring-guide layout of [AshishBhalotiya/BITS](https://github.com/AshishBhalotiya/BITS), adapted for the comprehensive/end-semester syllabus and the latest available papers.
 
-## Study guides
+## Start here
 
-- [Master plan and final toolkit](exam_analysis/00_MASTER_PLAN_AND_TOOLKIT.md)
-- [MFML study guide](exam_analysis/01_MFML_STUDY_GUIDE.md)
-- [ISM study guide](exam_analysis/02_ISM_STUDY_GUIDE.md)
-- [DNN study guide](exam_analysis/03_DNN_STUDY_GUIDE.md)
-- [ML study guide](exam_analysis/04_ML_STUDY_GUIDE.md)
-- [Repository audit and evidence](exam_analysis/05_REPOSITORY_AUDIT_AND_EVIDENCE.md)
-- [80 solved end-sem questions (20 per subject)](exam_analysis/06_80_SOLVED_QUESTIONS.md)
-- [Latest-paper gap-closure pack (20 detailed questions)](exam_analysis/07_LATEST_PAPER_GAP_CLOSURE.md)
+| Subject | Question bank | Scoring guide |
+|---|---|---|
+| MFML | [25 solved questions](MFML/ENDSEM_QUESTION_BANK.md) | [MFML scoring guide](MFML/ENDSEM_SCORING_GUIDE.md) |
+| ISM | [25 solved questions](ISM/ENDSEM_QUESTION_BANK.md) | [ISM scoring guide](ISM/ENDSEM_SCORING_GUIDE.md) |
+| DNN | [25 solved questions](DNN/ENDSEM_QUESTION_BANK.md) | [DNN scoring guide](DNN/ENDSEM_SCORING_GUIDE.md) |
+| ML | [25 solved questions](ML/ENDSEM_QUESTION_BANK.md) | [ML scoring guide](ML/ENDSEM_SCORING_GUIDE.md) |
 
-## Important notice
+Each subject folder also contains its available course handout, watermarked slides, latest and previous question papers, notes, and supporting material.
 
-This repository intentionally excludes university-provided handouts, watermarked slides, question papers, answer keys, recordings, and extracted source text. It contains only the generated preparation guides.
+## Recommended order
 
-Question-paper trends indicate probability, not a guarantee that a particular topic or question will recur.
+1. Read the subject's scoring guide and priority map.
+2. Solve the 20 core questions without viewing solutions.
+3. Complete the five latest-paper gap-closing questions.
+4. Attempt the latest regular and makeup papers under exam timing.
+5. Use the authorized watermarked slides as an indexed lookup resource.
+
+## Evidence and limitations
+
+- Official handouts are treated as authoritative for syllabus scope.
+- PYQ labels refer only to verified question structures; original practice values are not represented as verbatim PYQs.
+- Recent papers receive more weight than older papers.
+- PYQ recurrence indicates probability, never a guarantee of future questions or marks.
+
+## Access notice
+
+This private repository contains university-provided and watermarked course material. Keep it private and do not add collaborators or redistribute its contents unless university policy permits it.
